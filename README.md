@@ -11,9 +11,9 @@ Usage: analyzepng.exe file.png
 ```
 $ analyzepng.exe test.png
 File 'test.png'
-IHDR, 13 bytes, 206 x 131
-IDAT, 31814 bytes
-IEND, 0 bytes
+IHDR, 13 bytes at 16, 206 x 131
+IDAT, 31814 bytes at 41
+IEND, 0 bytes at 31867
 This PNG has: 3 chunks, 31871 bytes
 ```
 
@@ -24,10 +24,10 @@ to avoid running into any `-O2` optimizer bug similar to this one that affected
 ```
 $ analyzepng.exe trailing.png
 File 'trailing.png'
-IHDR, 13 bytes, 39 x 31
-PLTE, 6 bytes
-IDAT, 125 bytes
-IEND, 0 bytes
+IHDR, 13 bytes at 16, 39 x 31
+PLTE, 6 bytes at 41
+IDAT, 125 bytes at 59
+IEND, 0 bytes at 196
 This PNG has: 4 chunks, 200 bytes
 Error: 6 bytes of trailing data
 ```
@@ -35,10 +35,10 @@ Error: 6 bytes of trailing data
 ```
 $ analyzepng.exe trailing5gig.png
 File 'trailing5gig.png'
-IHDR, 13 bytes, 39 x 31
-PLTE, 6 bytes
-IDAT, 125 bytes
-IEND, 0 bytes
+IHDR, 13 bytes at 16, 39 x 31
+PLTE, 6 bytes at 41
+IDAT, 125 bytes at 59
+IEND, 0 bytes at 196
 This PNG has: 4 chunks, 200 bytes
 Error: over 15728768 bytes of trailing data
 ```

@@ -102,7 +102,7 @@ static void parse_png_ihdr(struct myruntime * runtime)
     skip(runtime, 4);
     w = big_u32(buff + 8 + 0);
     h = big_u32(buff + 8 + 4);
-    printf("IHDR, 13 bytes, %u x %u\n", w, h);
+    printf("IHDR, 13 bytes at 16, %u x %u\n", w, h);
     ++runtime->chunks;
 }
 
@@ -114,7 +114,7 @@ static int parse_png_chunk(struct myruntime * runtime)
     buff[8] = '\0';
     check(runtime, 0 != strncmp(buff + 4, "IHDR", 4), "duplicate IHDR");
     len = big_u32(buff);
-    printf("%s, %u bytes\n", buff + 4, len);
+    printf("%s, %u bytes at %u\n", buff + 4, len, runtime->bytes);
     skip(runtime, len + 4);
     ++runtime->chunks;
     return 0 != strncmp(buff + 4, "IEND", 4);
