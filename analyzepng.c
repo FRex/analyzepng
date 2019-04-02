@@ -120,18 +120,30 @@ static int parse_png_chunk(struct myruntime * runtime)
     return 0 != strncmp(buff + 4, "IEND", 4);
 }
 
-typedef unsigned long long u64;
+#define MAX_TRAILING_DATA_READ (15 * 1024 * 1024)
 
 static void check_for_trailing_data(struct myruntime * runtime)
 {
     char buff[128];
-    u64 loaded = 0;
+    unsigned loaded = 0u;
+
     while(!feof(runtime->f))
+    {
+        if(loaded > MAX_TRAILING_DATA_READ)
+            break;
+
         loaded += fread(buff, 1, 128, runtime->f);
+    }
+
+    if(loaded > MAX_TRAILING_DATA_READ)
+    {
+        fprintf(stderr, "Error: over %u bytes of trailing data\n", loaded);
+        longjmp(runtime->jumper, 1);
+    }
 
     if(loaded > 0)
     {
-        fprintf(stderr, "Error: %llu bytes of trailing data\n", loaded);
+        fprintf(stderr, "Error: %u bytes of trailing data\n", loaded);
         longjmp(runtime->jumper, 1);
     }
 }
