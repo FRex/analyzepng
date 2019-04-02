@@ -40,5 +40,5 @@ PLTE, 6 bytes at 41
 IDAT, 125 bytes at 59
 IEND, 0 bytes at 196
 This PNG has: 4 chunks, 200 bytes
-Error: over 15728768 bytes of trailing data
+Error: over 15728640 bytes of trailing data
 ```

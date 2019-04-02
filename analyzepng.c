@@ -137,7 +137,7 @@ static void check_for_trailing_data(struct myruntime * runtime)
 
     if(loaded > MAX_TRAILING_DATA_READ)
     {
-        fprintf(stderr, "Error: over %u bytes of trailing data\n", loaded);
+        fprintf(stderr, "Error: over %u bytes of trailing data\n", (unsigned)MAX_TRAILING_DATA_READ);
         longjmp(runtime->jumper, 1);
     }
 
