@@ -114,7 +114,8 @@ static int parse_png_chunk(struct myruntime * runtime)
     buff[8] = '\0';
     check(runtime, 0 != strncmp(buff + 4, "IHDR", 4), "duplicate IHDR");
     len = big_u32(buff);
-    printf("%s, %u bytes at %u\n", buff + 4, len, runtime->bytes);
+    check(runtime, len < 2000000000, "chunk len >= 2000000000, assuming corruption");
+    printf("%s, %u bytes at %u\n", buff + 4, len, (int)runtime->bytes);
     skip(runtime, len + 4);
     ++runtime->chunks;
     return 0 != strncmp(buff + 4, "IEND", 4);
