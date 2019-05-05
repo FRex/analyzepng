@@ -56,19 +56,6 @@ static void skip(struct myruntime * runtime, int amount)
     runtime->bytes += amount;
 }
 
-const unsigned char kPngHeader[8] = {0x89, 'P', 'N', 'G', '\r', '\n', 0x1A, '\n'};
-
-static void verify_png_header(struct myruntime * runtime)
-{
-    char buff[8];
-    read(runtime, buff, 8);
-    if(0 != memcmp(buff, kPngHeader, 8))
-    {
-        fprintf(stderr, "Error: PNG 8-byte header has wrong values\n");
-        longjmp(runtime->jumper, 1);
-    }
-}
-
 static void check(struct myruntime * runtime, int b, const char * errmsg)
 {
     if(!b)
@@ -91,17 +78,37 @@ static unsigned big_u32(const char * buff)
     return ret;
 }
 
-static void parse_png_ihdr(struct myruntime * runtime)
+const unsigned char kPngHeaderGood[8] = {0x89, 'P', 'N', 'G', '\r', '\n', 0x1A, '\n'};
+const unsigned char kPngHeaderTopBitZeroed[8] = {0x09, 'P', 'N', 'G', '\r', '\n', 0x1A, '\n'};
+
+const unsigned char kPngHeaderDos2Unix[7] = {0x89, 'P', 'N', 'G', '\n', 0x1A, '\n'};
+
+const unsigned char kPngHeaderUnix2Dos[9] = {0x89, 'P', 'N', 'G', '\r', '\n', 0x1A, '\r', '\n'};
+const unsigned char kPngHeaderUnix2DosBad[10] = {0x89, 'P', 'N', 'G', '\r', '\r', '\n', 0x1A, '\r', '\n'};
+
+
+static void verify_png_header_and_ihdr(struct myruntime * runtime)
 {
-    char buff[30];
+    char buff[50];
     unsigned len, w, h;
-    read(runtime, buff, 8 + 13);
-    check(runtime, 0 == strncmp(buff + 4, "IHDR", 4) , "first chunk isn't IHDR");
-    len = big_u32(buff);
+
+    /* 8 for png header, 8 for len and id and 13 for data of IHDR */
+    read(runtime, buff, 8 + 8 + 13);
+
+    /* check png header itself for common errors */
+    check(runtime, 0 != memcmp(buff, kPngHeaderTopBitZeroed, 8), "PNG 8-byte header top bit zeroed");
+    check(runtime, 0 != memcmp(buff, kPngHeaderDos2Unix, 7), "PNG 8-byte header looks like after dos2unix");
+    check(runtime, 0 != memcmp(buff, kPngHeaderUnix2Dos, 9), "PNG 8-byte header looks like after unix2dos");
+    check(runtime, 0 != memcmp(buff, kPngHeaderUnix2DosBad, 10), "PNG 8-byte header looks like after bad \\n to \\r\\n conversion");
+    check(runtime, 0 == memcmp(buff, kPngHeaderGood, 8), "PNG 8-byte header has unknown wrong values");
+
+    /* now check IHDR */
+    check(runtime, 0 == strncmp(buff + 8 + 4, "IHDR", 4) , "first chunk isn't IHDR");
+    len = big_u32(buff + 8);
     check(runtime, len == 13u , "IHDR length isn't 13");
-    skip(runtime, 4);
-    w = big_u32(buff + 8 + 0);
-    h = big_u32(buff + 8 + 4);
+    skip(runtime, 4); /* skip over CRC of IHDR */
+    w = big_u32(buff + 8 + 8 + 0);
+    h = big_u32(buff + 8 + 8 + 4);
     printf("IHDR, 13 bytes at 16, %u x %u\n", w, h);
     ++runtime->chunks;
 }
@@ -151,8 +158,7 @@ static void check_for_trailing_data(struct myruntime * runtime)
 
 static void doit(struct myruntime * runtime)
 {
-    verify_png_header(runtime);
-    parse_png_ihdr(runtime);
+    verify_png_header_and_ihdr(runtime);
     while(parse_png_chunk(runtime));
     printf("This PNG has: %d chunks, %u bytes\n", runtime->chunks, runtime->bytes);
     check_for_trailing_data(runtime);
