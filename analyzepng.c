@@ -187,21 +187,11 @@ static FILE * my_utf8_fopen_rb(const char * fname)
 #endif
 }
 
-static int my_utf8_main(int argc, char ** argv)
+static int parse_and_close_png_file(FILE * f)
 {
     struct myruntime runtime;
     memset(&runtime, 0x0, sizeof(struct myruntime));
-    if(argc != 2)
-        return print_usage(argv[0]);
-
-    runtime.f = my_utf8_fopen_rb(argv[1]);
-    if(!runtime.f)
-    {
-        fprintf(stderr, "Error: fopen('%s') = NULL\n", argv[1]);
-        return 1;
-    }
-
-    printf("File '%s'\n", argv[1]);
+    runtime.f = f;
     if(setjmp(runtime.jumper) == 0)
     {
         doit(&runtime);
@@ -213,8 +203,23 @@ static int my_utf8_main(int argc, char ** argv)
         fclose(runtime.f);
         return 1;
     }
+}
 
-    return 0;
+static int my_utf8_main(int argc, char ** argv)
+{
+    FILE * f = NULL;
+    if(argc != 2)
+        return print_usage(argv[0]);
+
+    f = my_utf8_fopen_rb(argv[1]);
+    if(!f)
+    {
+        fprintf(stderr, "Error: fopen('%s') = NULL\n", argv[1]);
+        return 1;
+    }
+
+    printf("File '%s'\n", argv[1]);
+    return parse_and_close_png_file(f);
 }
 
 #ifndef _MSC_VER
