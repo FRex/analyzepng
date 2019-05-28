@@ -31,7 +31,7 @@ struct myruntime
 {
     jmp_buf jumper;
     FILE * f;
-    int chunks;
+    unsigned long long chunks;
     unsigned long long bytes;
 };
 
@@ -175,7 +175,7 @@ static void doit(struct myruntime * runtime)
 {
     verify_png_header_and_ihdr(runtime);
     while(parse_png_chunk(runtime));
-    printf("This PNG has: %d chunks, %llu bytes\n", runtime->chunks, runtime->bytes);
+    printf("This PNG has: %llu chunks, %llu bytes\n", runtime->chunks, runtime->bytes);
     check_for_trailing_data(runtime);
 }
 
