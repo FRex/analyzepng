@@ -32,7 +32,7 @@ struct myruntime
     jmp_buf jumper;
     FILE * f;
     int chunks;
-    unsigned bytes;
+    unsigned long long bytes;
 };
 
 static void read(struct myruntime * runtime, void * buff, int want)
@@ -46,14 +46,29 @@ static void read(struct myruntime * runtime, void * buff, int want)
     runtime->bytes += want;
 }
 
-static void skip(struct myruntime * runtime, int amount)
+static void skip_step_int(struct myruntime * runtime, int amount)
 {
+    if(amount == 0)
+        return;
+
     if(fseek(runtime->f, amount, SEEK_CUR))
     {
         fprintf(stderr, "Error: fseek(f, %d, SEEK_CUR) failed\n", amount);
         longjmp(runtime->jumper, 1);
     }
+
     runtime->bytes += amount;
+}
+
+static void skip(struct myruntime * runtime, unsigned amount)
+{
+    const int step = 1900000000;
+    while(amount >= (unsigned)step)
+    {
+        skip_step_int(runtime, step);
+        amount -= step;
+    }
+    skip_step_int(runtime, (int)amount);
 }
 
 static void check(struct myruntime * runtime, int b, const char * errmsg)
@@ -121,9 +136,9 @@ static int parse_png_chunk(struct myruntime * runtime)
     buff[8] = '\0';
     check(runtime, 0 != strncmp(buff + 4, "IHDR", 4), "duplicate IHDR");
     len = big_u32(buff);
-    check(runtime, len < 2000000000, "chunk len >= 2000000000, assuming corruption");
-    printf("%s, %u bytes at %u\n", buff + 4, len, runtime->bytes);
-    skip(runtime, (int)(len + 4u));
+    printf("%s, %u bytes at %llu\n", buff + 4, len, runtime->bytes);
+    skip(runtime, len);
+    skip(runtime, 4); /* skip 4 byte crc that's after the chunk */
     ++runtime->chunks;
     return 0 != strncmp(buff + 4, "IEND", 4);
 }
@@ -160,7 +175,7 @@ static void doit(struct myruntime * runtime)
 {
     verify_png_header_and_ihdr(runtime);
     while(parse_png_chunk(runtime));
-    printf("This PNG has: %d chunks, %u bytes\n", runtime->chunks, runtime->bytes);
+    printf("This PNG has: %d chunks, %llu bytes\n", runtime->chunks, runtime->bytes);
     check_for_trailing_data(runtime);
 }
 

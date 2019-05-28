@@ -42,3 +42,14 @@ IEND, 0 bytes at 196
 This PNG has: 4 chunks, 200 bytes
 Error: over 15728640 bytes of trailing data
 ```
+
+```
+$ analyzepng.exe hehe8gigs.png
+File 'hehe8gigs.png'
+IHDR, 13 bytes at 16, 1920 x 1080
+hehe, 4294967295 bytes at 41
+hehe, 4294967295 bytes at 4294967348
+IDAT, 3813740 bytes at 8589934655
+IEND, 0 bytes at 8593748407
+This PNG has: 5 chunks, 8593748411 bytes
+```
