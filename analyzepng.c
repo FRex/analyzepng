@@ -128,6 +128,23 @@ static void verify_png_header_and_ihdr(struct myruntime * runtime)
     ++runtime->chunks;
 }
 
+static int letter(char c)
+{
+    return ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z');
+}
+
+static void print_4cc_no_newline(const char * id)
+{
+    if(letter(id[0]) && letter(id[1]) && letter(id[2]) && letter(id[3]))
+    {
+        printf("%s", id);
+    }
+    else
+    {
+        printf("0x%x", big_u32(id));
+    }
+}
+
 static int parse_png_chunk(struct myruntime * runtime)
 {
     char buff[10];
@@ -136,7 +153,8 @@ static int parse_png_chunk(struct myruntime * runtime)
     buff[8] = '\0';
     check(runtime, 0 != strncmp(buff + 4, "IHDR", 4), "duplicate IHDR");
     len = big_u32(buff);
-    printf("%s, %u bytes at %llu\n", buff + 4, len, runtime->bytes);
+    print_4cc_no_newline(buff + 4);
+    printf(", %u bytes at %llu\n", len, runtime->bytes);
     skip(runtime, len);
     skip(runtime, 4); /* skip 4 byte crc that's after the chunk */
     ++runtime->chunks;
