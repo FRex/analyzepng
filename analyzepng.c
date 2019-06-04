@@ -141,7 +141,7 @@ static void print_4cc_no_newline(const char * id)
     }
     else
     {
-        printf("0x%x", big_u32(id));
+        printf("0x%08x", big_u32(id));
     }
 }
 
