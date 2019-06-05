@@ -209,7 +209,7 @@ static FILE * my_utf8_fopen_rb(const char * fname)
 #else
     FILE * ret;
     const int utf16chars = strlen(fname) + 5;
-    wchar_t * fname16 = (wchar_t*)malloc(sizeof(wchar_t) * utf16chars);
+    wchar_t * fname16 = (wchar_t*)calloc(utf16chars, sizeof(wchar_t));
     if(!fname16)
         return NULL;
 
@@ -282,11 +282,11 @@ int wmain(int argc, wchar_t ** argv)
     for(i = 0; i < argc; ++i)
     {
         const size_t utf8len = wcslen(argv[i]) * 3 + 10;
-        utf8argv[i] = (char*)malloc(utf8len);
+        utf8argv[i] = (char*)calloc(utf8len, 1);
         if(!utf8argv[i])
         {
             retcode = 1;
-            fputs("Error: malloc error in wmain\n", stderr);
+            fputs("Error: calloc error in wmain\n", stderr);
             break;
         }
         WideCharToMultiByte(CP_UTF8, 0, argv[i], -1, utf8argv[i], utf8len, NULL, NULL);
