@@ -101,11 +101,79 @@ const unsigned char kPngHeaderDos2Unix[7] = {0x89, 'P', 'N', 'G', '\n', 0x1A, '\
 const unsigned char kPngHeaderUnix2Dos[9] = {0x89, 'P', 'N', 'G', '\r', '\n', 0x1A, '\r', '\n'};
 const unsigned char kPngHeaderUnix2DosBad[10] = {0x89, 'P', 'N', 'G', '\r', '\r', '\n', 0x1A, '\r', '\n'};
 
+static int valid_bitdepth_and_colortype(int bitdepth, int colortype)
+{
+    /* from png spec list of valid combinations */
+    switch(colortype)
+    {
+        case 0:
+            return bitdepth == 1 || bitdepth == 2 || bitdepth == 4 || bitdepth == 8 || bitdepth == 16;
+        case 2:
+            return bitdepth == 8 || bitdepth == 16;
+        case 3:
+            return bitdepth == 1 || bitdepth == 2 || bitdepth == 4 || bitdepth == 8;
+        case 4:
+            return bitdepth == 8 || bitdepth == 16;
+        case 6:
+            return bitdepth == 8 || bitdepth == 16;
+    }
+    return 0;
+}
+
+static void pretty_print_ihdr(const char * ihdrdata13)
+{
+    unsigned w, h;
+    int bitdepth, colortype, compressionmethod;
+
+    /* TODO: warn if these don't fit in 31 bits, as spec says? */
+    w = big_u32(ihdrdata13 + 0);
+    h = big_u32(ihdrdata13 + 4);
+
+    bitdepth = (unsigned char)ihdrdata13[8 + 0];
+    colortype = (unsigned char)ihdrdata13[8 + 1];
+    compressionmethod = (unsigned char)ihdrdata13[8 + 2];
+
+    /* always display dimensions and bit depth */
+    printf("IHDR, 13 bytes at 16, %u x %u, %d-bit ", w, h, bitdepth);
+
+    /* pretty print color format */
+    switch(colortype)
+    {
+        case 0:
+            printf("greyscale");
+            break;
+        case 2:
+            printf("RGB");
+            break;
+        case 3:
+            printf("paletted");
+            break;
+        case 4:
+            printf("greyscale with alpha");
+            break;
+        case 6:
+            printf("RGBA");
+            break;
+        default:
+            printf("unknown-colortype-%d", colortype);
+            break;
+    } /* switch colortype */
+
+    /* nothing printed = valid combo */
+    if(!valid_bitdepth_and_colortype(bitdepth, colortype))
+        printf(" (invalid bitdepth + colortype combination)");
+
+    /* nothing printed = the valid/only compression - deflate 32 KiB */
+    if(compressionmethod != 0)
+        printf(", unknown compression method %d", compressionmethod);
+
+    printf("\n");
+}
 
 static void verify_png_header_and_ihdr(struct myruntime * runtime)
 {
     char buff[50];
-    unsigned len, w, h;
+    unsigned len;
 
     /* 8 for png header, 8 for len and id and 13 for data of IHDR */
     read(runtime, buff, 8 + 8 + 13);
@@ -122,9 +190,7 @@ static void verify_png_header_and_ihdr(struct myruntime * runtime)
     len = big_u32(buff + 8);
     check(runtime, len == 13u , "IHDR length isn't 13");
     skip(runtime, 4); /* skip over CRC of IHDR */
-    w = big_u32(buff + 8 + 8 + 0);
-    h = big_u32(buff + 8 + 8 + 4);
-    printf("IHDR, 13 bytes at 16, %u x %u\n", w, h);
+    pretty_print_ihdr(buff + 8 + 8);
     ++runtime->chunks;
 }
 
