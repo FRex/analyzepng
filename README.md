@@ -17,7 +17,7 @@ File 'test.png'
 IHDR, 13 bytes at 16, 206 x 131, 8-bit RGBA
 IDAT, 31814 bytes at 41
 IEND, 0 bytes at 31867
-This PNG has: 3 chunks, 31871 bytes
+This PNG has: 3 chunks, 31871 bytes (31.124 KiB)
 ```
 
 Go to releases to download a Windows exe compiled with Pelles C with no `-O2`
@@ -31,8 +31,8 @@ IHDR, 13 bytes at 16, 39 x 31, 1-bit paletted
 PLTE, 6 bytes at 41
 IDAT, 125 bytes at 59
 IEND, 0 bytes at 196
-This PNG has: 4 chunks, 200 bytes
-Error: 6 bytes of trailing data
+This PNG has: 4 chunks, 200 bytes (0.195 KiB)
+Error: 6 bytes (0.006 KiB) of trailing data
 ```
 
 ```
@@ -42,8 +42,8 @@ IHDR, 13 bytes at 16, 39 x 31, 1-bit paletted
 PLTE, 6 bytes at 41
 IDAT, 125 bytes at 59
 IEND, 0 bytes at 196
-This PNG has: 4 chunks, 200 bytes
-Error: over 15728640 bytes of trailing data
+This PNG has: 4 chunks, 200 bytes (0.195 KiB)
+Error: over 15728640 bytes (15.000 MiB) of trailing data
 ```
 
 ```
@@ -54,7 +54,7 @@ hehe, 4294967295 bytes at 41
 hehe, 4294967295 bytes at 4294967348
 IDAT, 3813740 bytes at 8589934655
 IEND, 0 bytes at 8593748407
-This PNG has: 5 chunks, 8593748411 bytes
+This PNG has: 5 chunks, 8593748411 bytes (8.004 GiB)
 ```
 
 ```
@@ -64,7 +64,7 @@ IHDR, 13 bytes at 16, 39 x 31, 1-bit paletted
 PLTE, 6 bytes at 41
 0x00004154, 125 bytes at 59
 IEND, 0 bytes at 196
-This PNG has: 4 chunks, 200 bytes
+This PNG has: 4 chunks, 200 bytes (0.195 KiB)
 ```
 
 ```
@@ -113,5 +113,5 @@ fdAT, 3372 bytes at 56125
 fcTL, 26 bytes at 59509
 fdAT, 3872 bytes at 59547
 IEND, 0 bytes at 63431
-This PNG has: 43 chunks, 63435 bytes
+This PNG has: 43 chunks, 63435 bytes (61.948 KiB)
 ```

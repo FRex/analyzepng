@@ -6,6 +6,28 @@
 #include <stdlib.h>
 #include <setjmp.h>
 
+static double pretty_filesize_amount(unsigned long long bytes)
+{
+    if(bytes < (1024 * 1024))
+        return bytes / 1024.0;
+
+    if(bytes < (1024 * 1024 * 1024))
+        return bytes / (1024.0 * 1024.0);
+
+    return bytes / (1024.0 * 1024.0 * 1024.0);
+}
+
+static const char * pretty_filesize_unit(unsigned long long bytes)
+{
+    if(bytes < (1024 * 1024))
+        return "KiB";
+
+    if(bytes < (1024 * 1024 * 1024))
+        return "MiB";
+
+    return "GiB";
+}
+
 static const char * filepath_to_filename(const char * path)
 {
     size_t i, len, lastslash;
@@ -244,13 +266,21 @@ static void check_for_trailing_data(struct myruntime * runtime)
 
     if(loaded > MAX_TRAILING_DATA_READ)
     {
-        fprintf(stderr, "Error: over %u bytes of trailing data\n", (unsigned)MAX_TRAILING_DATA_READ);
+        fprintf(stderr, "Error: over %u bytes (%.3f %s) of trailing data\n",
+            (unsigned)MAX_TRAILING_DATA_READ,
+            pretty_filesize_amount(MAX_TRAILING_DATA_READ),
+            pretty_filesize_unit(MAX_TRAILING_DATA_READ)
+        );
         longjmp(runtime->jumper, 1);
     }
 
     if(loaded > 0)
     {
-        fprintf(stderr, "Error: %u bytes of trailing data\n", loaded);
+        fprintf(stderr, "Error: %u bytes (%.3f %s) of trailing data\n",
+            loaded,
+            pretty_filesize_amount(loaded),
+            pretty_filesize_unit(loaded)
+        );
         longjmp(runtime->jumper, 1);
     }
 }
@@ -259,7 +289,11 @@ static void doit(struct myruntime * runtime)
 {
     verify_png_header_and_ihdr(runtime);
     while(parse_png_chunk(runtime));
-    printf("This PNG has: %llu chunks, %llu bytes\n", runtime->chunks, runtime->bytes);
+    printf("This PNG has: %llu chunks, %llu bytes (%.3f %s)\n",
+        runtime->chunks, runtime->bytes,
+        pretty_filesize_amount(runtime->bytes),
+        pretty_filesize_unit(runtime->bytes)
+    );
     check_for_trailing_data(runtime);
 }
 
