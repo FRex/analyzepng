@@ -55,8 +55,6 @@ struct myruntime
     FILE * f;
     unsigned long long chunks;
     unsigned long long bytes;
-    unsigned long long imagebytes;
-    unsigned long long idatbytes;
 };
 
 static void read(struct myruntime * runtime, void * buff, int want)
@@ -205,49 +203,6 @@ static void pretty_print_ihdr(const char * ihdrdata13)
     printf("\n");
 }
 
-static int colortype_multiplier(int colortype)
-{
-    if(colortype == 2)
-        return 3; /* RGB */
-
-    if(colortype == 4)
-        return 2; /* greyscale + alpha */
-
-    if(colortype == 6)
-        return 4; /* RGBA */
-
-    return 1; /* greyscale, palettes, default for unknown, etc. */
-}
-
-static unsigned long long calculate_imagebytes_from_ihdr(const char * ihdrdata13)
-{
-    unsigned long long ret, w, h;
-    int bitdepth, colortype, filtermethod, interlacemethod;
-
-    w = big_u32(ihdrdata13 + 0);
-    h = big_u32(ihdrdata13 + 4);
-
-    bitdepth = (unsigned char)ihdrdata13[8 + 0];
-    colortype = (unsigned char)ihdrdata13[8 + 1];
-    filtermethod = (unsigned char)ihdrdata13[8 + 3];
-    interlacemethod = (unsigned char)ihdrdata13[8 + 4];
-
-    /* TODO: Adam7 size guess not impl yet... */
-    if(interlacemethod == 1)
-        return 0;
-
-    /* first count scanlines in full bytes */
-    ret = w * bitdepth * colortype_multiplier(colortype);
-    ret = (ret / 8) + !!(ret % 8); /* ceil (ret / 8.0) in pure uint/bit ops */
-
-    /* now multiply in the height and add in the leading 1 byte per scanline */
-    ret *= h;
-    if(filtermethod == 0)
-        ret += h;
-
-    return ret;
-}
-
 static void verify_png_header_and_ihdr(struct myruntime * runtime)
 {
     char buff[50];
@@ -269,7 +224,6 @@ static void verify_png_header_and_ihdr(struct myruntime * runtime)
     check(runtime, len == 13u , "IHDR length isn't 13");
     skip(runtime, 4); /* skip over CRC of IHDR */
     pretty_print_ihdr(buff + 8 + 8);
-    runtime->imagebytes = calculate_imagebytes_from_ihdr(buff + 8 + 8);
     ++runtime->chunks;
 }
 
@@ -303,9 +257,6 @@ static int parse_png_chunk(struct myruntime * runtime)
     skip(runtime, len);
     skip(runtime, 4); /* skip 4 byte crc that's after the chunk */
     ++runtime->chunks;
-    if(0 == strncmp(buff + 4, "IDAT", 4))
-        runtime->idatbytes += len;
-
     return 0 != strncmp(buff + 4, "IEND", 4);
 }
 
@@ -355,7 +306,6 @@ static void doit(struct myruntime * runtime)
         pretty_filesize_unit(runtime->bytes)
     );
 
-    /* printf("TEST %llu %llu\n", runtime->idatbytes, runtime->imagebytes); */
     check_for_trailing_data(runtime);
 }
 
