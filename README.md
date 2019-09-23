@@ -36,6 +36,19 @@ Error: 6 bytes (0.006 KiB) of trailing data
 ```
 
 ```
+$ analyzepng.exe adam7.png
+File 'adam7.png'
+IHDR, 13 bytes at 16, 16 x 16, 8-bit RGBA, Adam7 interlaced
+bKGD, 6 bytes at 41
+pHYs, 9 bytes at 59
+tIME, 7 bytes at 80
+tEXt, 8 bytes at 99
+IDAT, 571 bytes at 119
+IEND, 0 bytes at 702
+This PNG has: 7 chunks, 706 bytes (0.689 KiB)
+```
+
+```
 $ analyzepng.exe trailing5gig.png
 File 'trailing5gig.png'
 IHDR, 13 bytes at 16, 39 x 31, 1-bit paletted
