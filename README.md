@@ -1,14 +1,14 @@
 # analyzepng
 
-Small stadalone C program to load a single png file and print info about its chunks.
+Small stadalone C program to load png files and print info about their chunks.
 
 Tries to be robust, not print trash, handle any chunk length, etc. if chunk ID
 is not letters they will be printed as a hex number (see bad4cc.png below).
 
 ```
 $ analyzepng.exe
-analyzepng.exe - print information about chunks of a given png file
-Usage: analyzepng.exe file.png
+analyzepng.exe - print information about chunks of given png files
+Usage: analyzepng.exe file.png...
 ```
 
 ```
@@ -25,7 +25,7 @@ to avoid running into any `-O2` optimizer bug similar to this one that affected
 `stb_image`: [Pelles C forum bug report](https://forum.pellesc.de/index.php?topic=7837.0)
 
 ```
-$ analyzepng.exe trailing.png
+$ analyzepng.exe trailing.png adam7.png
 File 'trailing.png'
 IHDR, 13 bytes at 16, 39 x 31, 1-bit paletted
 PLTE, 6 bytes at 41
@@ -33,10 +33,7 @@ IDAT, 125 bytes at 59
 IEND, 0 bytes at 196
 This PNG has: 4 chunks, 200 bytes (0.195 KiB)
 Error: 6 bytes (0.006 KiB) of trailing data
-```
 
-```
-$ analyzepng.exe adam7.png
 File 'adam7.png'
 IHDR, 13 bytes at 16, 16 x 16, 8-bit RGBA, Adam7 interlaced
 bKGD, 6 bytes at 41

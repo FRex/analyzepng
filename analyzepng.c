@@ -44,8 +44,8 @@ static const char * filepath_to_filename(const char * path)
 static int print_usage(const char * argv0)
 {
     argv0 = filepath_to_filename(argv0);
-    fprintf(stderr, "%s - print information about chunks of a given png file\n", argv0);
-    fprintf(stderr, "Usage: %s file.png\n", argv0);
+    fprintf(stderr, "%s - print information about chunks of given png files\n", argv0);
+    fprintf(stderr, "Usage: %s file.png...\n", argv0);
     return 1;
 }
 
@@ -350,21 +350,36 @@ static int parse_and_close_png_file(FILE * f)
     }
 }
 
-static int my_utf8_main(int argc, char ** argv)
+static int handle_file(const char * fname)
 {
-    FILE * f = NULL;
-    if(argc != 2)
-        return print_usage(argv[0]);
-
-    f = my_utf8_fopen_rb(argv[1]);
-    if(!f)
+    FILE * f = my_utf8_fopen_rb(fname);
+    if(f)
     {
-        fprintf(stderr, "Error: fopen('%s') = NULL\n", argv[1]);
-        return 1;
+        printf("File '%s'\n", fname);
+        return parse_and_close_png_file(f);
     }
 
-    printf("File '%s'\n", argv[1]);
-    return parse_and_close_png_file(f);
+    fprintf(stderr, "Error: fopen('%s') = NULL\n", fname);
+    return 1;
+}
+
+static int my_utf8_main(int argc, char ** argv)
+{
+    int i, anyerrs;
+
+    if(argc < 2)
+        return print_usage(argv[0]);
+
+    anyerrs = 0;
+    for(i = 1; i < argc; ++i)
+    {
+        if(i > 1)
+            printf("\n");
+
+        anyerrs += handle_file(argv[i]);
+    } /* for */
+
+    return !!anyerrs;
 }
 
 #ifndef _MSC_VER
