@@ -78,50 +78,14 @@ This PNG has: 4 chunks, 200 bytes (0.195 KiB)
 ```
 
 ```
-$ analyzepng.exe Animated_PNG_example_bouncing_beach_ball.png
-File 'Animated_PNG_example_bouncing_beach_ball.png'
-IHDR, 13 bytes at 16, 100 x 100, 8-bit RGBA
-acTL, 8 bytes at 41
-fcTL, 26 bytes at 61
-IDAT, 4625 bytes at 99
-fcTL, 26 bytes at 4736
-fdAT, 4215 bytes at 4774
-fcTL, 26 bytes at 9001
-fdAT, 3922 bytes at 9039
-fcTL, 26 bytes at 12973
-fdAT, 3713 bytes at 13011
-fcTL, 26 bytes at 16736
-fdAT, 3409 bytes at 16774
-fcTL, 26 bytes at 20195
-fdAT, 3058 bytes at 20233
-fcTL, 26 bytes at 23303
-fdAT, 2672 bytes at 23341
-fcTL, 26 bytes at 26025
-fdAT, 2493 bytes at 26063
-fcTL, 26 bytes at 28568
-fdAT, 2636 bytes at 28606
-fcTL, 26 bytes at 31254
-fdAT, 2670 bytes at 31292
-fcTL, 26 bytes at 33974
-fdAT, 2585 bytes at 34012
-fcTL, 26 bytes at 36609
-fdAT, 2487 bytes at 36647
-fcTL, 26 bytes at 39146
-fdAT, 2555 bytes at 39184
-fcTL, 26 bytes at 41751
-fdAT, 2662 bytes at 41789
-fcTL, 26 bytes at 44463
-fdAT, 2718 bytes at 44501
-fcTL, 26 bytes at 47231
-fdAT, 2765 bytes at 47269
-fcTL, 26 bytes at 50046
-fdAT, 2865 bytes at 50084
-fcTL, 26 bytes at 52961
-fdAT, 3076 bytes at 52999
-fcTL, 26 bytes at 56087
-fdAT, 3372 bytes at 56125
-fcTL, 26 bytes at 59509
-fdAT, 3872 bytes at 59547
-IEND, 0 bytes at 63431
-This PNG has: 43 chunks, 63435 bytes (61.948 KiB)
+$ analyzepng.exe jumpscare.png
+File 'jumpscare.png'
+IHDR, 13 bytes at 16, 465 x 465, 8-bit RGBA
+acTL, 8 bytes at 41, APNG animation control
+fcTL, 26 bytes at 61, APNG frame control
+IDAT, 98899 bytes at 99
+fcTL, 26 bytes at 99010, APNG frame control
+fdAT, 236069 bytes at 99048, APNG frame data
+IEND, 0 bytes at 335129
+This PNG has: 7 chunks, 335133 bytes (327.278 KiB)
 ```

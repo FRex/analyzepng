@@ -244,6 +244,18 @@ static void print_4cc_no_newline(const char * id)
     }
 }
 
+static void print_4cc_extra_info(const char * id)
+{
+    if(0 == strcmp(id, "acTL"))
+        printf(", APNG animation control");
+
+    if(0 == strcmp(id, "fcTL"))
+        printf(", APNG frame control");
+
+    if(0 == strcmp(id, "fdAT"))
+        printf(", APNG frame data");
+}
+
 static int parse_png_chunk(struct myruntime * runtime)
 {
     char buff[10];
@@ -253,7 +265,9 @@ static int parse_png_chunk(struct myruntime * runtime)
     check(runtime, 0 != strncmp(buff + 4, "IHDR", 4), "duplicate IHDR");
     len = big_u32(buff);
     print_4cc_no_newline(buff + 4);
-    printf(", %u bytes at %llu\n", len, runtime->bytes);
+    printf(", %u bytes at %llu", len, runtime->bytes);
+    print_4cc_extra_info(buff + 4);
+    printf("\n");
     skip(runtime, len);
     skip(runtime, 4); /* skip 4 byte crc that's after the chunk */
     ++runtime->chunks;
