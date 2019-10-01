@@ -116,12 +116,54 @@ static unsigned big_u32(const char * buff)
 }
 
 const unsigned char kPngHeaderGood[8] = {0x89, 'P', 'N', 'G', '\r', '\n', 0x1A, '\n'};
+const unsigned char kMngHeaderGood[8] = {0x8A, 'M', 'N', 'G', '\r', '\n', 0x1A, '\n'};
+const unsigned char kJngHeaderGood[8] = {0x8B, 'J', 'N', 'G', '\r', '\n', 0x1A, '\n'};
+
 const unsigned char kPngHeaderTopBitZeroed[8] = {0x09, 'P', 'N', 'G', '\r', '\n', 0x1A, '\n'};
+const unsigned char kMngHeaderTopBitZeroed[8] = {0x0A, 'M', 'N', 'G', '\r', '\n', 0x1A, '\n'};
+const unsigned char kJngHeaderTopBitZeroed[8] = {0x0B, 'J', 'N', 'G', '\r', '\n', 0x1A, '\n'};
 
 const unsigned char kPngHeaderDos2Unix[7] = {0x89, 'P', 'N', 'G', '\n', 0x1A, '\n'};
+const unsigned char kMngHeaderDos2Unix[7] = {0x8A, 'M', 'N', 'G', '\n', 0x1A, '\n'};
+const unsigned char kJngHeaderDos2Unix[7] = {0x8B, 'J', 'N', 'G', '\n', 0x1A, '\n'};
 
 const unsigned char kPngHeaderUnix2Dos[9] = {0x89, 'P', 'N', 'G', '\r', '\n', 0x1A, '\r', '\n'};
+const unsigned char kMngHeaderUnix2Dos[9] = {0x8A, 'M', 'N', 'G', '\r', '\n', 0x1A, '\r', '\n'};
+const unsigned char kJngHeaderUnix2Dos[9] = {0x8B, 'J', 'N', 'G', '\r', '\n', 0x1A, '\r', '\n'};
+
 const unsigned char kPngHeaderUnix2DosBad[10] = {0x89, 'P', 'N', 'G', '\r', '\r', '\n', 0x1A, '\r', '\n'};
+const unsigned char kMngHeaderUnix2DosBad[10] = {0x8A, 'M', 'N', 'G', '\r', '\r', '\n', 0x1A, '\r', '\n'};
+const unsigned char kJngHeaderUnix2DosBad[10] = {0x8B, 'J', 'N', 'G', '\r', '\r', '\n', 0x1A, '\r', '\n'};
+
+static void check_png_header(struct myruntime * runtime, const char * buff)
+{
+    /* common mangling errors that png header catches */
+    check(runtime, 0 != memcmp(buff, kPngHeaderTopBitZeroed, 8), "PNG 8-byte header top bit zeroed");
+    check(runtime, 0 != memcmp(buff, kPngHeaderDos2Unix, 7), "PNG 8-byte header looks like after dos2unix");
+    check(runtime, 0 != memcmp(buff, kPngHeaderUnix2Dos, 9), "PNG 8-byte header looks like after unix2dos");
+    check(runtime, 0 != memcmp(buff, kPngHeaderUnix2DosBad, 10), "PNG 8-byte header looks like after bad \\n to \\r\\n conversion");
+
+    /* common mangling errors that mng header catches */
+    check(runtime, 0 != memcmp(buff, kMngHeaderTopBitZeroed, 8), "MNG 8-byte header top bit zeroed, this tool only handles PNG");
+    check(runtime, 0 != memcmp(buff, kMngHeaderDos2Unix, 7), "MNG 8-byte header looks like after dos2unix, this tool only handles PNG");
+    check(runtime, 0 != memcmp(buff, kMngHeaderUnix2Dos, 9), "MNG 8-byte header looks like after unix2dos, this tool only handles PNG");
+    check(runtime, 0 != memcmp(buff, kMngHeaderUnix2DosBad, 10), "MNG 8-byte header looks like after bad \\n to \\r\\n conversion, this tool only handles PNG");
+
+    /* if valid mng header print that this program is for png only */
+    check(runtime, 0 != memcmp(buff, kMngHeaderGood, 8), "MNG 8-byte header valid, this tool only handles PNG");
+
+    /* common mangling errors that jng header catches */
+    check(runtime, 0 != memcmp(buff, kJngHeaderTopBitZeroed, 8), "JNG 8-byte header top bit zeroed, this tool only handles PNG");
+    check(runtime, 0 != memcmp(buff, kJngHeaderDos2Unix, 7), "JNG 8-byte header looks like after dos2unix, this tool only handles PNG");
+    check(runtime, 0 != memcmp(buff, kJngHeaderUnix2Dos, 9), "JNG 8-byte header looks like after unix2dos, this tool only handles PNG");
+    check(runtime, 0 != memcmp(buff, kJngHeaderUnix2DosBad, 10), "JNG 8-byte header looks like after bad \\n to \\r\\n conversion, this tool only handles PNG");
+
+    /* if valid jng header print that this program is not for jng */
+    check(runtime, 0 != memcmp(buff, kJngHeaderGood, 8), "JNG 8-byte header valid, this tool only handles PNG");
+
+    /* catches all other unknown errors so keep last */
+    check(runtime, 0 == memcmp(buff, kPngHeaderGood, 8), "PNG 8-byte header has unknown wrong values");
+}
 
 static int valid_bitdepth_and_colortype(int bitdepth, int colortype)
 {
@@ -211,12 +253,8 @@ static void verify_png_header_and_ihdr(struct myruntime * runtime)
     /* 8 for png header, 8 for len and id and 13 for data of IHDR */
     read(runtime, buff, 8 + 8 + 13);
 
-    /* check png header itself for common errors */
-    check(runtime, 0 != memcmp(buff, kPngHeaderTopBitZeroed, 8), "PNG 8-byte header top bit zeroed");
-    check(runtime, 0 != memcmp(buff, kPngHeaderDos2Unix, 7), "PNG 8-byte header looks like after dos2unix");
-    check(runtime, 0 != memcmp(buff, kPngHeaderUnix2Dos, 9), "PNG 8-byte header looks like after unix2dos");
-    check(runtime, 0 != memcmp(buff, kPngHeaderUnix2DosBad, 10), "PNG 8-byte header looks like after bad \\n to \\r\\n conversion");
-    check(runtime, 0 == memcmp(buff, kPngHeaderGood, 8), "PNG 8-byte header has unknown wrong values");
+    /* check png header itself for common errors and if its mng or jng instead */
+    check_png_header(runtime, buff);
 
     /* now check IHDR */
     check(runtime, 0 == strncmp(buff + 8 + 4, "IHDR", 4) , "first chunk isn't IHDR");

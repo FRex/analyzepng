@@ -4,6 +4,7 @@ Small stadalone C program to load png files and print info about their chunks.
 
 Tries to be robust, not print trash, handle any chunk length, etc. if chunk ID
 is not letters they will be printed as a hex number (see bad4cc.png below).
+Should work on any OS and any C compiler.
 
 ```
 $ analyzepng.exe
@@ -54,6 +55,12 @@ IDAT, 125 bytes at 59
 IEND, 0 bytes at 196
 This PNG has: 4 chunks, 200 bytes (0.195 KiB)
 Error: over 15728640 bytes (15.000 MiB) of trailing data
+```
+
+```
+$ analyzepng.exe mng.mng
+File 'mng.mng'
+Error: MNG 8-byte header valid, this tool only handles PNG
 ```
 
 ```
