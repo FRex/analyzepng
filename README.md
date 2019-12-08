@@ -18,7 +18,7 @@ File 'test.png'
 IHDR, 13 bytes at 16, 206 x 131, 8-bit RGBA
 IDAT, 31814 bytes at 41
 IEND, 0 bytes at 31867
-This PNG has: 3 chunks, 31871 bytes (31.124 KiB)
+This PNG has: 3 chunks (1 IDAT), 31871 bytes (31.124 KiB)
 ```
 
 Go to releases to download a Windows exe compiled with Pelles C with no `-O2`
@@ -32,7 +32,7 @@ IHDR, 13 bytes at 16, 39 x 31, 1-bit paletted
 PLTE, 6 bytes at 41
 IDAT, 125 bytes at 59
 IEND, 0 bytes at 196
-This PNG has: 4 chunks, 200 bytes (0.195 KiB)
+This PNG has: 4 chunks (1 IDAT), 200 bytes (0.195 KiB)
 Error: 6 bytes (0.006 KiB) of trailing data
 
 File 'adam7.png'
@@ -43,7 +43,7 @@ tIME, 7 bytes at 80
 tEXt, 8 bytes at 99
 IDAT, 571 bytes at 119
 IEND, 0 bytes at 702
-This PNG has: 7 chunks, 706 bytes (0.689 KiB)
+This PNG has: 7 chunks (1 IDAT), 706 bytes (0.689 KiB)
 ```
 
 ```
@@ -53,7 +53,7 @@ IHDR, 13 bytes at 16, 39 x 31, 1-bit paletted
 PLTE, 6 bytes at 41
 IDAT, 125 bytes at 59
 IEND, 0 bytes at 196
-This PNG has: 4 chunks, 200 bytes (0.195 KiB)
+This PNG has: 4 chunks (1 IDAT), 200 bytes (0.195 KiB)
 Error: over 15728640 bytes (15.000 MiB) of trailing data
 ```
 
@@ -71,7 +71,7 @@ hehe, 4294967295 bytes at 41
 hehe, 4294967295 bytes at 4294967348
 IDAT, 3813740 bytes at 8589934655
 IEND, 0 bytes at 8593748407
-This PNG has: 5 chunks, 8593748411 bytes (8.004 GiB)
+This PNG has: 5 chunks (1 IDAT), 8593748411 bytes (8.004 GiB)
 ```
 
 ```
@@ -81,7 +81,7 @@ IHDR, 13 bytes at 16, 39 x 31, 1-bit paletted
 PLTE, 6 bytes at 41
 0x00004154, 125 bytes at 59
 IEND, 0 bytes at 196
-This PNG has: 4 chunks, 200 bytes (0.195 KiB)
+This PNG has: 4 chunks (0 IDAT), 200 bytes (0.195 KiB)
 ```
 
 ```
@@ -94,5 +94,5 @@ IDAT, 98899 bytes at 99
 fcTL, 26 bytes at 99010, APNG frame control
 fdAT, 236069 bytes at 99048, APNG frame data
 IEND, 0 bytes at 335129
-This PNG has: 7 chunks, 335133 bytes (327.278 KiB)
+This PNG has: 7 chunks (1 IDAT), 335133 bytes (327.278 KiB)
 ```

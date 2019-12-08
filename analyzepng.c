@@ -54,6 +54,7 @@ struct myruntime
     jmp_buf jumper;
     FILE * f;
     unsigned long long chunks;
+    unsigned long long idatchunks;
     unsigned long long bytes;
 };
 
@@ -309,6 +310,7 @@ static int parse_png_chunk(struct myruntime * runtime)
     skip(runtime, len);
     skip(runtime, 4); /* skip 4 byte crc that's after the chunk */
     ++runtime->chunks;
+    runtime->idatchunks += (0 == strncmp(buff + 4, "IDAT", 4));
     return 0 != strncmp(buff + 4, "IEND", 4);
 }
 
@@ -352,8 +354,8 @@ static void doit(struct myruntime * runtime)
 {
     verify_png_header_and_ihdr(runtime);
     while(parse_png_chunk(runtime));
-    printf("This PNG has: %llu chunks, %llu bytes (%.3f %s)\n",
-        runtime->chunks, runtime->bytes,
+    printf("This PNG has: %llu chunks (%llu IDAT), %llu bytes (%.3f %s)\n",
+        runtime->chunks, runtime->idatchunks, runtime->bytes,
         pretty_filesize_amount(runtime->bytes),
         pretty_filesize_unit(runtime->bytes)
     );
