@@ -391,22 +391,30 @@ static FILE * my_utf8_fopen_rb(const char * fname)
 #endif
 }
 
+/* this helper is to avoid using volatile but also not
+ * have any locals in same scope as the setjmp call */
+static int setjmp_and_doit(struct myruntime * runtime)
+{
+    if(setjmp(runtime->jumper) == 0)
+    {
+        doit(runtime);
+        return 0;
+    }
+
+    /* if setjmp returned non-zero from longjmp return 1 aka error */
+    return 1;
+}
+
 static int parse_and_close_png_file(FILE * f)
 {
     struct myruntime runtime;
+    int ret;
+
     memset(&runtime, 0x0, sizeof(struct myruntime));
     runtime.f = f;
-    if(setjmp(runtime.jumper) == 0)
-    {
-        doit(&runtime);
-        fclose(runtime.f);
-        return 0;
-    }
-    else
-    {
-        fclose(runtime.f);
-        return 1;
-    }
+    ret = setjmp_and_doit(&runtime);
+    fclose(f);
+    return ret;
 }
 
 static int handle_file(const char * fname)
