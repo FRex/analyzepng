@@ -6,10 +6,16 @@ Tries to be robust, not print trash, handle any chunk length, etc. if chunk ID
 is not letters they will be printed as a hex number (see bad4cc.png below).
 Should work on any OS and any C compiler.
 
+On Windows, line `Info : BLA_WMAIN_USING_WMAIN_BOOLEAN = 1` in the help/usage
+message means that the exe can handle Unicode UTF-16 filenames, in the command
+output (`File ''` lines) they will be printed as UTF-8.
+
 ```
 $ analyzepng.exe
 analyzepng.exe - print information about chunks of given png files
-Usage: analyzepng.exe file.png...
+Info : BLA_WMAIN_USING_WMAIN_BOOLEAN = 1
+Usage: analyzepng.exe [--no-idat] file.png...
+    --no-idat #don't print IDAT chunk locations and sizes
 ```
 
 ```
@@ -24,6 +30,31 @@ This PNG has: 3 chunks (1 IDAT), 31871 bytes (31.124 KiB)
 Go to releases to download a Windows exe compiled with Pelles C with no `-O2`
 to avoid running into any `-O2` optimizer bug similar to this one that affected
 `stb_image`: [Pelles C forum bug report](https://forum.pellesc.de/index.php?topic=7837.0)
+
+Option `--no-idat` skips printing `IDAT` chunks, which can be useful to not clutter
+the output if there are very many. Total `IDAT` count is still displayed at the end.
+
+```
+$ analyzepng 2000px-Pacman.png
+File '2000px-Pacman.png'
+IHDR, 13 bytes at 16, 2000 x 2107, 8-bit RGBA
+IDAT, 8192 bytes at 41
+IDAT, 8192 bytes at 8245
+IDAT, 8192 bytes at 16449
+IDAT, 8192 bytes at 24653
+IDAT, 8192 bytes at 32857
+IDAT, 8192 bytes at 41061
+IDAT, 8192 bytes at 49265
+IDAT, 8087 bytes at 57469
+IEND, 0 bytes at 65568
+This PNG has: 10 chunks (8 IDAT), 65572 bytes (64.035 KiB)
+
+$ analyzepng --no-idat 2000px-Pacman.png
+File '2000px-Pacman.png'
+IHDR, 13 bytes at 16, 2000 x 2107, 8-bit RGBA
+IEND, 0 bytes at 65568
+This PNG has: 10 chunks (8 IDAT), 65572 bytes (64.035 KiB)
+```
 
 ```
 $ analyzepng.exe trailing.png adam7.png
