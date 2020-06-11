@@ -50,7 +50,8 @@ static int print_usage(const char * argv0)
     argv0 = filepath_to_filename(argv0);
     fprintf(stderr, "%s - print information about chunks of given png files\n", argv0);
     fprintf(stderr, "Info : BLA_WMAIN_USING_WMAIN_BOOLEAN = %d\n", BLA_WMAIN_USING_WMAIN_BOOLEAN);
-    fprintf(stderr, "Usage: %s file.png...\n", argv0);
+    fprintf(stderr, "Usage: %s [--no-idat] file.png...\n", argv0);
+    fprintf(stderr, "    --no-idat #don't print IDAT chunk locations and sizes\n");
     return 1;
 }
 
@@ -58,6 +59,7 @@ struct myruntime
 {
     jmp_buf jumper;
     FILE * f;
+    int skipidat;
     unsigned long long chunks;
     unsigned long long idatchunks;
     unsigned long long bytes;
@@ -304,18 +306,26 @@ static int parse_png_chunk(struct myruntime * runtime)
 {
     char buff[10];
     unsigned len;
+    int isidat;
     read(runtime, buff, 8);
     buff[8] = '\0';
     check(runtime, 0 != strncmp(buff + 4, "IHDR", 4), "duplicate IHDR");
+    isidat = (0 == strncmp(buff + 4, "IDAT", 4));
     len = big_u32(buff);
-    print_4cc_no_newline(buff + 4);
-    printf(", %u bytes at %llu", len, runtime->bytes);
-    print_4cc_extra_info(buff + 4);
-    printf("\n");
+
+    /* print if its not idat or if its idat but we arent skipping them */
+    if(!isidat || !runtime->skipidat)
+    {
+        print_4cc_no_newline(buff + 4);
+        printf(", %u bytes at %llu", len, runtime->bytes);
+        print_4cc_extra_info(buff + 4);
+        printf("\n");
+    }
+
     skip(runtime, len);
     skip(runtime, 4); /* skip 4 byte crc that's after the chunk */
     ++runtime->chunks;
-    runtime->idatchunks += (0 == strncmp(buff + 4, "IDAT", 4));
+    runtime->idatchunks += isidat;
     return 0 != strncmp(buff + 4, "IEND", 4);
 }
 
@@ -405,25 +415,26 @@ static int setjmp_and_doit(struct myruntime * runtime)
     return 1;
 }
 
-static int parse_and_close_png_file(FILE * f)
+static int parse_and_close_png_file(FILE * f, int skipidat)
 {
     struct myruntime runtime;
     int ret;
 
     memset(&runtime, 0x0, sizeof(struct myruntime));
     runtime.f = f;
+    runtime.skipidat = skipidat;
     ret = setjmp_and_doit(&runtime);
     fclose(f);
     return ret;
 }
 
-static int handle_file(const char * fname)
+static int handle_file(const char * fname, int skipidat)
 {
     FILE * f = my_utf8_fopen_rb(fname);
     if(f)
     {
         printf("File '%s'\n", fname);
-        return parse_and_close_png_file(f);
+        return parse_and_close_png_file(f, skipidat);
     }
 
     fprintf(stderr, "Error: fopen('%s') = NULL\n", fname);
@@ -432,10 +443,21 @@ static int handle_file(const char * fname)
 
 static int my_utf8_main(int argc, char ** argv)
 {
-    int i, anyerrs;
+    int i, anyerrs, skipidat;
+    const char * argv0;
+
+    /* adjust argc and argv if first argv is --no-idat */
+    argv0 = argv[0];
+    skipidat = 0;
+    if(argv[1] && 0 == strcmp("--no-idat", argv[1]))
+    {
+        skipidat = 1;
+        --argc;
+        ++argv;
+    }
 
     if(argc < 2)
-        return print_usage(argv[0]);
+        return print_usage(argv0);
 
     anyerrs = 0;
     for(i = 1; i < argc; ++i)
@@ -443,7 +465,7 @@ static int my_utf8_main(int argc, char ** argv)
         if(i > 1)
             printf("\n");
 
-        anyerrs += handle_file(argv[i]);
+        anyerrs += handle_file(argv[i], skipidat);
     } /* for */
 
     return !!anyerrs;
