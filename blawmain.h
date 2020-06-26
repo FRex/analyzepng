@@ -23,8 +23,6 @@ int wmain(int argc, wchar_t ** argv)
         bytesneeded += WideCharToMultiByte(CP_UTF8, 0, argv[i], -1, NULL, 0, NULL, NULL);
 
     utf8argv  = (char **)malloc(bytesneeded);
-    utf8argv[argc] = NULL;
-    endptr = ((char*)utf8argv) + bytesneeded;
 
     if(!utf8argv)
     {
@@ -32,6 +30,8 @@ int wmain(int argc, wchar_t ** argv)
         return 111;
     }
 
+    utf8argv[argc] = NULL;
+    endptr = ((char*)utf8argv) + bytesneeded;
     utf8ptrout = (char*)(utf8argv + (argc + 1));
     for(i = 0; i < argc; ++i)
     {
