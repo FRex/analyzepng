@@ -389,6 +389,10 @@ static FILE * my_utf8_fopen_rb(const char * fname)
     return fopen(fname, "rb");
 #else
     FILE * ret;
+
+    /* surely enough for wchars + nul, it overalloactes quite a bit though:
+     * any 1-3 byte utf-8 sequence is 1 utf-16 wchar: 1-3 >= 1
+     * any 4 byte utf-8 sequence is 2 utf-16 wchars: 4 > 2 */
     const int utf16chars = strlen(fname) + 5;
     wchar_t * fname16 = (wchar_t*)calloc(utf16chars, sizeof(wchar_t));
     if(!fname16)
