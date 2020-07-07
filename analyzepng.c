@@ -184,6 +184,9 @@ static void check_png_header(struct myruntime * runtime, const char * buff)
     /* any riff file other than webp */
     check(runtime, 0 != memcmp(buff, "RIFF", 4), "starts with 'RIFF', but has no 'WEBP' at offset 8");
 
+    /* bmp files starts with BM + length, etc. not BMP! */
+    check(runtime, 0 != memcmp(buff, "BM", 2), "starts with 'BM', like a BMP file");
+
     /* catches all other unknown errors so keep last */
     check(runtime, 0 == memcmp(buff, kPngHeaderGood, 8), "PNG 8-byte header has unknown wrong values");
 }
