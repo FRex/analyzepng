@@ -143,6 +143,8 @@ const unsigned char kPngHeaderUnix2DosBad[10] = {0x89, 'P', 'N', 'G', '\r', '\r'
 const unsigned char kMngHeaderUnix2DosBad[10] = {0x8A, 'M', 'N', 'G', '\r', '\r', '\n', 0x1A, '\r', '\n'};
 const unsigned char kJngHeaderUnix2DosBad[10] = {0x8B, 'J', 'N', 'G', '\r', '\r', '\n', 0x1A, '\r', '\n'};
 
+const unsigned char kJpegTriByteStart[3] = {0xff, 0xd8, 0xff};
+
 static void check_png_header(struct myruntime * runtime, const char * buff)
 {
     /* common mangling errors that png header catches */
@@ -168,6 +170,9 @@ static void check_png_header(struct myruntime * runtime, const char * buff)
 
     /* if valid jng header print that this program is not for jng */
     check(runtime, 0 != memcmp(buff, kJngHeaderGood, 8), "JNG 8-byte header valid, this tool only handles PNG");
+
+    /* jpeg, jpg, jfif, etc. files seem to start with these 3 bytes */
+    check(runtime, 0 != memcmp(buff, kJpegTriByteStart, 3), "starts with 0xff 0xd8 0xff, like a JPEG file");
 
     /* catches all other unknown errors so keep last */
     check(runtime, 0 == memcmp(buff, kPngHeaderGood, 8), "PNG 8-byte header has unknown wrong values");
