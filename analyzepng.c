@@ -177,6 +177,13 @@ static void check_png_header(struct myruntime * runtime, const char * buff)
     /* gif files start with ascii GIF + version, like 87a, 89a, so just look at first 3 bytes */
     check(runtime, 0 != memcmp(buff, "GIF", 3), "starts with 'GIF', like a GIF file");
 
+    /* webp file which is in a riff container */
+    check(runtime, (0 != memcmp(buff, "RIFF", 4)) || (0 != memcmp(buff + 8, "WEBP", 4)),
+        "starts with 'RIFF' and has 'WEBP' on offset 8, like a WEBP file");
+
+    /* any riff file other than webp */
+    check(runtime, 0 != memcmp(buff, "RIFF", 4), "starts with 'RIFF', but has no 'WEBP' at offset 8");
+
     /* catches all other unknown errors so keep last */
     check(runtime, 0 == memcmp(buff, kPngHeaderGood, 8), "PNG 8-byte header has unknown wrong values");
 }
