@@ -89,7 +89,25 @@ Error: over 15728640 bytes (15.000 MiB) of trailing data
 ```
 
 ```
-$ analyzepng.exe mng.mng
+$ analyzepng bmp.bmp jpg.jpg GIF87a.gif GIF89a.gif wav.wav webp.webp mng.mng
+File 'bmp.bmp'
+Error: starts with 'BM', like a BMP file
+
+File 'jpg.jpg'
+Error: starts with 0xff 0xd8 0xff, like a JPEG file
+
+File 'GIF87a.gif'
+Error: starts with 'GIF', like a GIF file
+
+File 'GIF89a.gif'
+Error: starts with 'GIF', like a GIF file
+
+File 'wav.wav'
+Error: starts with 'RIFF', but has no 'WEBP' at offset 8
+
+File 'webp.webp'
+Error: starts with 'RIFF' and has 'WEBP' on offset 8, like a WEBP file
+
 File 'mng.mng'
 Error: MNG 8-byte header valid, this tool only handles PNG
 ```
