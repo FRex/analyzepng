@@ -369,6 +369,28 @@ static unsigned print_extra_info(struct myruntime * runtime, unsigned len, const
         return len;
     } /* if tEXt */
 
+    if(0 == strcmp(id, "pHYs"))
+    {
+        char buff[9];
+        unsigned x, y;
+
+        if(len != 9u)
+        {
+            fputs(", not 9 bytes so not parsed", stdout);
+            return 0u;
+        }
+
+        read(runtime, buff, 9u);
+        x = big_u32(buff + 0);
+        y = big_u32(buff + 4);
+        if(buff[8] == 1)
+            printf(", %u x %u pixels per meter", x, y);
+        else
+            printf(", %u x %u pixels per unknown unit (%d)\n", x, y, buff[8]);
+
+        return 9u;
+    } /* if pHYs */
+
     return 0u; /* nothing special and no extra in chunk data read */
 }
 
