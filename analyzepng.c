@@ -320,16 +320,69 @@ static void print_4cc_extra_info(const char * id)
         printf(", APNG frame data");
 }
 
+static void print_escaped_binary_string(const char * str, unsigned len)
+{
+    unsigned char c;
+    unsigned i;
+
+    for(i = 0; i < len; ++i)
+    {
+        c = (unsigned char)str[i];
+        switch(c)
+        {
+            case '\\':
+                fputs("\\", stdout);
+                break;
+            case '\0':
+                fputs("\\0", stdout);
+                break;
+            default:
+                if(' ' <= c && c <= '~')
+                    putchar(c);
+                else
+                    printf("\\x%x%x", c >> 4, c & 0xf);
+                break;
+        } /* switch c */
+    } /* for i */
+}
+
+#define MAX_TEXT_BUFF 512
+
+static unsigned print_extra_info(struct myruntime * runtime, unsigned len, const char * id)
+{
+    if(0 == strcmp(id, "tEXt"))
+    {
+        char buff[MAX_TEXT_BUFF];
+        int truncated;
+
+        truncated = len > MAX_TEXT_BUFF;
+        if(truncated)
+            len = MAX_TEXT_BUFF;
+
+        read(runtime, buff, len);
+        if(truncated)
+            fputs(", part, ", stdout);
+        else
+            fputs(", full, ", stdout);
+
+        print_escaped_binary_string(buff, len);
+        return len;
+    } /* if tEXt */
+
+    return 0u; /* nothing special and no extra in chunk data read */
+}
+
 static int parse_png_chunk(struct myruntime * runtime)
 {
     char buff[10];
-    unsigned len;
+    unsigned len, usedbyextra;
     int isidat;
     read(runtime, buff, 8);
     buff[8] = '\0';
     check(runtime, 0 != strncmp(buff + 4, "IHDR", 4), "duplicate IHDR");
     isidat = (0 == strncmp(buff + 4, "IDAT", 4));
     len = big_u32(buff);
+    usedbyextra = 0u; /* set to 0 in case the if doesnt run its body */
 
     /* print if its not idat or if its idat but we arent skipping them */
     if(!isidat || !runtime->skipidat)
@@ -337,10 +390,11 @@ static int parse_png_chunk(struct myruntime * runtime)
         print_4cc_no_newline(buff + 4);
         printf(", %u bytes at %llu", len, runtime->bytes);
         print_4cc_extra_info(buff + 4);
+        usedbyextra = print_extra_info(runtime, len, buff + 4);
         printf("\n");
     }
 
-    skip(runtime, len);
+    skip(runtime, len - usedbyextra); /* skip any data not consumed by extra info print */
     skip(runtime, 4); /* skip 4 byte crc that's after the chunk */
     ++runtime->chunks;
     runtime->idatchunks += isidat;
