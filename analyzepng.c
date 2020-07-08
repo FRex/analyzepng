@@ -391,6 +391,29 @@ static unsigned print_extra_info(struct myruntime * runtime, unsigned len, const
         return 9u;
     } /* if pHYs */
 
+    if(0 == strcmp(id, "tIME"))
+    {
+        char buff[7];
+        int year;
+
+        if(len != 7)
+        {
+            fputs(", not 7 bytes so not parsed", stdout);
+            return 0u;
+        }
+
+        read(runtime, buff, 7u);
+        year = (unsigned char)buff[0];
+        year = (year << 8) + (unsigned char)buff[1];
+        printf(
+            ", %d-%02d-%02d %02d:%02d:%02d",
+            year, buff[2], buff[3], /* year month day */
+            buff[4], buff[5], buff[6] /* hour minute second */
+        );
+
+        return 7u;
+    } /* tIME */
+
     return 0u; /* nothing special and no extra in chunk data read */
 }
 
