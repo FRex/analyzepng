@@ -15,7 +15,7 @@ $ analyzepng.exe
 analyzepng.exe - print information about chunks of given png files
 Info : BLA_WMAIN_USING_WMAIN_BOOLEAN = 1
 Usage: analyzepng.exe [--no-idat] file.png...
-    --no-idat #don't print IDAT chunk locations and sizes
+    --no-idat #don't print IDAT chunk locations and sizes, can be anywhere
 ```
 
 ```

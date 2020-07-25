@@ -51,7 +51,7 @@ static int print_usage(const char * argv0)
     fprintf(stderr, "%s - print information about chunks of given png files\n", argv0);
     fprintf(stderr, "Info : BLA_WMAIN_USING_WMAIN_BOOLEAN = %d\n", BLA_WMAIN_USING_WMAIN_BOOLEAN);
     fprintf(stderr, "Usage: %s [--no-idat] file.png...\n", argv0);
-    fprintf(stderr, "    --no-idat #don't print IDAT chunk locations and sizes\n");
+    fprintf(stderr, "    --no-idat #don't print IDAT chunk locations and sizes, can be anywhere\n");
     return 1;
 }
 
@@ -562,31 +562,43 @@ static int handle_file(const char * fname, int skipidat)
     return 1;
 }
 
+static int is_dash_dash_no_idat(const char * str)
+{
+    return 0 == strcmp("--no-idat", str);
+}
+
+static int count_dash_dash_no_idat(int argc, char ** argv)
+{
+    int i, ret;
+
+    ret = 0;
+    for(i = 1; i < argc; ++i)
+        if(is_dash_dash_no_idat(argv[i]))
+            ++ret;
+
+    return ret;
+}
+
 static int my_utf8_main(int argc, char ** argv)
 {
-    int i, anyerrs, skipidat;
-    const char * argv0;
+    int i, anyerrs, skipidat, files;
 
-    /* adjust argc and argv if first argv is --no-idat */
-    argv0 = argv[0];
-    skipidat = 0;
-    if(argv[1] && 0 == strcmp("--no-idat", argv[1]))
-    {
-        skipidat = 1;
-        --argc;
-        ++argv;
-    }
-
-    if(argc < 2)
-        return print_usage(argv0);
+    skipidat = count_dash_dash_no_idat(argc, argv);
+    if((argc - skipidat) < 2)
+        return print_usage(argv[0]);
 
     anyerrs = 0;
+    files = 0;
     for(i = 1; i < argc; ++i)
     {
-        if(i > 1)
+        if(is_dash_dash_no_idat(argv[i]))
+            continue;
+
+        if(files > 0)
             printf("\n");
 
-        anyerrs += handle_file(argv[i], skipidat);
+        ++files;
+        anyerrs += handle_file(argv[i], !!skipidat);
     } /* for */
 
     return !!anyerrs;
