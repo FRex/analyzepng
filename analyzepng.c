@@ -414,6 +414,39 @@ static unsigned print_extra_info(struct myruntime * runtime, unsigned len, const
         return 7u;
     } /* tIME */
 
+    if(0 == strcmp(id, "sRGB"))
+    {
+        unsigned char intent;
+
+        if(len != 1)
+        {
+            fputs(", sRGB is not 1 byte", stdout);
+            return 0u;
+        }
+
+        read(runtime, &intent, 1u);
+        switch(intent)
+        {
+        case 0:
+            fputs(", 0 - perceptual", stdout);
+            break;
+        case 1:
+            fputs(", 1 - relative colorimetric", stdout);
+            break;
+        case 2:
+            fputs(", 2 - saturation", stdout);
+            break;
+        case 3:
+            fputs(", 3 - absolute colorimetric", stdout);
+            break;
+        default:
+            printf(", %d - unknown", intent);
+            break;
+        }
+
+        return 1u;
+    } /* sRGB */
+
     return 0u; /* nothing special and no extra in chunk data read */
 }
 
