@@ -386,7 +386,7 @@ static unsigned print_extra_info(struct myruntime * runtime, unsigned len, const
         if(buff[8] == 1)
             printf(", %u x %u pixels per meter", x, y);
         else
-            printf(", %u x %u pixels per unknown unit (%d)\n", x, y, buff[8]);
+            printf(", %u x %u pixels per unknown unit (%d)", x, y, buff[8]);
 
         return 9u;
     } /* if pHYs */
