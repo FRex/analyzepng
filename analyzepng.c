@@ -346,11 +346,11 @@ static void print_escaped_binary_string(const char * str, unsigned len)
     } /* for i */
 }
 
-#define MAX_TEXT_BUFF 512
+#define MAX_TEXT_BUFF 4096
 
 static unsigned print_extra_info(struct myruntime * runtime, unsigned len, const char * id)
 {
-    if(0 == strcmp(id, "tEXt"))
+    if(0 == strcmp(id, "tEXt") || 0 == strcmp(id, "iTXt"))
     {
         char buff[MAX_TEXT_BUFF];
         int truncated;
@@ -360,14 +360,31 @@ static unsigned print_extra_info(struct myruntime * runtime, unsigned len, const
             len = MAX_TEXT_BUFF;
 
         read(runtime, buff, len);
+
+        if(0 == strcmp(id, "iTXt"))
+        {
+            int i, compressed, method;
+
+            for(i = 0; i < (int)(len - 2); ++i)
+            {
+                if(buff[i] == '\0')
+                {
+                    compressed = buff[i + 1];
+                    method = buff[i + 2];
+                    printf(", compression flag = %d, method = %d", compressed, method);
+                    break;
+                }
+            } /* for */
+        } /* if iTXt */
+
         if(truncated)
-            fputs(", part, ", stdout);
+            fputs(", part (as ASCII + escapes): ", stdout);
         else
-            fputs(", full, ", stdout);
+            fputs(", full (as ASCII + escapes): ", stdout);
 
         print_escaped_binary_string(buff, len);
         return len;
-    } /* if tEXt */
+    } /* if tEXt or iTXt */
 
     if(0 == strcmp(id, "pHYs"))
     {
