@@ -60,16 +60,16 @@ static const char * filepath_to_filename(const char * path)
     return path + lastslash;
 }
 
-static int print_usage(const char * argv0)
+static int print_usage(const char * argv0, FILE * f)
 {
     argv0 = filepath_to_filename(argv0);
-    fprintf(stderr, "%s - print information about chunks of given png files\n", argv0);
-    fprintf(stderr, "Info : BLA_WMAIN_USING_WMAIN_BOOLEAN = %d\n", BLA_WMAIN_USING_WMAIN_BOOLEAN);
-    fprintf(stderr, "Usage: %s [--no-idat] file.png...\n", argv0);
-    fprintf(stderr, "    --h OR --help #print this help\n");
-    fprintf(stderr, "    --no-idat #don't print IDAT chunk locations and sizes, can be anywhere\n");
-    fprintf(stderr, "    --set-bash-completion #print command to set bash completion\n");
-    fprintf(stderr, "    --do-bash-completion #do completion based on args from bash\n");
+    fprintf(f, "%s - print information about chunks of given png files\n", argv0);
+    fprintf(f, "Info : BLA_WMAIN_USING_WMAIN_BOOLEAN = %d\n", BLA_WMAIN_USING_WMAIN_BOOLEAN);
+    fprintf(f, "Usage: %s [--no-idat] file.png...\n", argv0);
+    fprintf(f, "    --h OR --help #print this help to stdout\n");
+    fprintf(f, "    --no-idat #don't print IDAT chunk locations and sizes, can be anywhere\n");
+    fprintf(f, "    --set-bash-completion #print command to set bash completion\n");
+    fprintf(f, "    --do-bash-completion #do completion based on args from bash\n");
     return 1;
 }
 
@@ -724,7 +724,7 @@ static int handle_completion(int argc, char ** argv)
     if(count_exact_option_presence(argc, argv, "--do-bash-completion"))
     {
         fprintf(stderr, "Error: wrong use or number of arguments to --do-bash-completion\n");
-        print_usage(argv[0]);
+        print_usage(argv[0], stderr);
         return 1;
     }
 
@@ -739,7 +739,7 @@ static int my_utf8_main(int argc, char ** argv)
     ensureNoWindowsLineConversions();
     if(count_exact_option_presence(argc, argv, "-h") || count_exact_option_presence(argc, argv, "--help"))
     {
-        print_usage(argv[0]);
+        print_usage(argv[0], stdout); /* to stdout since it was requested explicitely */
         /*  make sure to return 0, not 1 from print_usage, since this is
             requested/correct printing of help, not printing it on error */
         return 0;
@@ -750,7 +750,7 @@ static int my_utf8_main(int argc, char ** argv)
 
     skipidat = count_exact_option_presence(argc, argv, "--no-idat");
     if((argc - skipidat) < 2)
-        return print_usage(argv[0]);
+        return print_usage(argv[0], stderr);
 
     anyerrs = 0;
     files = 0;

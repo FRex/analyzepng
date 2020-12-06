@@ -13,11 +13,11 @@ output (`File ''` lines) they will be printed as UTF-8.
 Eval result of `--set-bash-completion` to set tab completion in bash.
 
 ```
-$ analyzepng.exe
+$ analyzepng.exe -h
 analyzepng.exe - print information about chunks of given png files
 Info : BLA_WMAIN_USING_WMAIN_BOOLEAN = 1
 Usage: analyzepng.exe [--no-idat] file.png...
-    --h OR --help #print this help
+    --h OR --help #print this help to stdout
     --no-idat #don't print IDAT chunk locations and sizes, can be anywhere
     --set-bash-completion #print command to set bash completion
     --do-bash-completion #do completion based on args from bash
