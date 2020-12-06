@@ -1,10 +1,25 @@
 #ifdef _MSC_VER
 #define _CRT_SECURE_NO_WARNINGS
+#define WINDOWS_NO_LINE_CONVERSIONS
 #endif
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <setjmp.h>
+
+#ifdef WINDOWS_NO_LINE_CONVERSIONS
+#include <fcntl.h>
+#include <io.h>
+#endif
+
+static void ensureNoWindowsLineConversions(void)
+{
+#ifdef WINDOWS_NO_LINE_CONVERSIONS
+    _setmode(_fileno(stdin), _O_BINARY);
+    _setmode(_fileno(stdout), _O_BINARY);
+    _setmode(_fileno(stderr), _O_BINARY);
+#endif /* WINDOWS_NO_LINE_CONVERSIONS */
+}
 
 static int my_utf8_main(int argc, char ** argv);
 #define BLA_WMAIN_FUNC my_utf8_main
@@ -51,7 +66,10 @@ static int print_usage(const char * argv0)
     fprintf(stderr, "%s - print information about chunks of given png files\n", argv0);
     fprintf(stderr, "Info : BLA_WMAIN_USING_WMAIN_BOOLEAN = %d\n", BLA_WMAIN_USING_WMAIN_BOOLEAN);
     fprintf(stderr, "Usage: %s [--no-idat] file.png...\n", argv0);
+    fprintf(stderr, "    --h OR --help #print this help\n");
     fprintf(stderr, "    --no-idat #don't print IDAT chunk locations and sizes, can be anywhere\n");
+    fprintf(stderr, "    --set-bash-completion #print command to set bash completion\n");
+    fprintf(stderr, "    --do-bash-completion #do completion based on args from bash\n");
     return 1;
 }
 
@@ -612,28 +630,121 @@ static int handle_file(const char * fname, int skipidat)
     return 1;
 }
 
-static int is_dash_dash_no_idat(const char * str)
+static int samestring(const char * a, const char * b)
 {
-    return 0 == strcmp("--no-idat", str);
+    return 0 == strcmp(a,b);
 }
 
-static int count_dash_dash_no_idat(int argc, char ** argv)
+static int count_exact_option_presence(int argc, char ** argv, const char * option)
 {
     int i, ret;
 
     ret = 0;
     for(i = 1; i < argc; ++i)
-        if(is_dash_dash_no_idat(argv[i]))
+        if(samestring(argv[i], option))
             ++ret;
 
     return ret;
+}
+
+static void fputs_with_escaped_slashes(const char * s, FILE * f)
+{
+    while(*s)
+    {
+        switch(*s)
+        {
+            case ' ': fputs("\\ ", f); break;
+            case '\\': fputs("\\\\", f); break;
+            default: fputc(*s, f); break;
+        } /* switch *s */
+
+        ++s;
+    } /* while *s */
+}
+
+#define OPTION_STRINGS_COUNT 5
+const char * const kAllOptionStrings[OPTION_STRINGS_COUNT] = {
+    "--no-idat",
+    "-h", "--help",
+    "--set-bash-completion", "--do-bash-completion",
+};
+
+static size_t count_matching_chars(const char * a, const char * b)
+{
+    size_t ret = 0u;
+    while(a[ret] && b[ret] && a[ret] == b[ret])
+        ++ret;
+
+    return ret;
+}
+
+static int handle_completion(int argc, char ** argv)
+{
+    if(count_exact_option_presence(argc, argv, "--set-bash-completion"))
+    {
+        if(argc != 2)
+            fprintf(stderr, "warning: other arguments specified along with --set-bash-completion\n");
+
+        printf("complete -o default -C '");
+        fputs_with_escaped_slashes(argv[0], stdout);
+        printf(" --do-bash-completion' %s\n", filepath_to_filename(argv[0]));
+        return 1;
+    } /* --set-bash-completion present */
+
+    if(argc == 5 && samestring(argv[1], "--do-bash-completion"))
+    {
+        int i;
+        size_t maxmatchlen, matchinglens[OPTION_STRINGS_COUNT];
+
+        /* nothing to do, let bash use other completions instead */
+        if(strlen(argv[3]) == 0)
+            return 1;
+
+        /* find lengths of all matches and then.. */
+        maxmatchlen = 0;
+        for(i = 0; i < OPTION_STRINGS_COUNT; ++i)
+        {
+            matchinglens[i] = count_matching_chars(argv[3], kAllOptionStrings[i]);
+            if(matchinglens[i] > maxmatchlen)
+                maxmatchlen = matchinglens[i];
+        }
+
+        /* ..and then print all the longest ones */
+        for(i = 0; i < OPTION_STRINGS_COUNT; ++i)
+            if(matchinglens[i] == maxmatchlen)
+                puts(kAllOptionStrings[i]);
+
+        return 1;
+    } /* argc == 5 and argv[1] is --do-bash-completion */
+
+    if(count_exact_option_presence(argc, argv, "--do-bash-completion"))
+    {
+        fprintf(stderr, "Error: wrong use or number of arguments to --do-bash-completion\n");
+        print_usage(argv[0]);
+        return 1;
+    }
+
+    /* no --set-bash-completion or --do-bash-completion at all */
+    return 0;
 }
 
 static int my_utf8_main(int argc, char ** argv)
 {
     int i, anyerrs, skipidat, files;
 
-    skipidat = count_dash_dash_no_idat(argc, argv);
+    ensureNoWindowsLineConversions();
+    if(count_exact_option_presence(argc, argv, "-h") || count_exact_option_presence(argc, argv, "--help"))
+    {
+        print_usage(argv[0]);
+        /*  make sure to return 0, not 1 from print_usage, since this is
+            requested/correct printing of help, not printing it on error */
+        return 0;
+    } /* if -h or --help argument present */
+
+    if(handle_completion(argc, argv))
+        return 0;
+
+    skipidat = count_exact_option_presence(argc, argv, "--no-idat");
     if((argc - skipidat) < 2)
         return print_usage(argv[0]);
 
@@ -641,7 +752,7 @@ static int my_utf8_main(int argc, char ** argv)
     files = 0;
     for(i = 1; i < argc; ++i)
     {
-        if(is_dash_dash_no_idat(argv[i]))
+        if(samestring(argv[i], "--no-idat"))
             continue;
 
         if(files > 0)
