@@ -709,6 +709,10 @@ static int handle_completion(int argc, char ** argv)
                 maxmatchlen = matchinglens[i];
         }
 
+        /* dont print in this case, it would not allow filename completions */
+        if(maxmatchlen == 0)
+            return 1;
+
         /* ..and then print all the longest ones */
         for(i = 0; i < OPTION_STRINGS_COUNT; ++i)
             if(matchinglens[i] == maxmatchlen)
