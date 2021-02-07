@@ -119,13 +119,17 @@ static void skip(struct myruntime * runtime, unsigned amount)
     skip_step_int(runtime, (int)amount);
 }
 
-static void check(struct myruntime * runtime, int b, const char * errmsg)
+static void error(struct myruntime * runtime, const char * errmsg)
+{
+    fprintf(stderr, "Error: %s\n", errmsg);
+    longjmp(runtime->jumper, 1);
+}
+
+/* ensures b - does nothing if its true, prints Errr: errmsg and longjmps if its false */
+static void ensure(struct myruntime * runtime, int b, const char * errmsg)
 {
     if(!b)
-    {
-        fprintf(stderr, "Error: %s\n", errmsg);
-        longjmp(runtime->jumper, 1);
-    }
+        error(runtime, errmsg);
 }
 
 static unsigned big_u32(const char * buff)
@@ -139,6 +143,14 @@ static unsigned big_u32(const char * buff)
     ret = (ret | b[3]);
 
     return ret;
+}
+
+static char to_printable(char c)
+{
+    if(' ' <= c && c <= '~')
+        return c;
+
+    return '.';
 }
 
 const unsigned char kPngHeaderGood[8] = {0x89, 'P', 'N', 'G', '\r', '\n', 0x1A, '\n'};
@@ -163,50 +175,66 @@ const unsigned char kJngHeaderUnix2DosBad[10] = {0x8B, 'J', 'N', 'G', '\r', '\r'
 
 const unsigned char kJpegTriByteStart[3] = {0xff, 0xd8, 0xff};
 
+/* buff must be at least 10 bytes (its 8 + 8 + 13 now) since some bad headers are 9 or 10 bytes */
 static void check_png_header(struct myruntime * runtime, const char * buff)
 {
     /* common mangling errors that png header catches */
-    check(runtime, 0 != memcmp(buff, kPngHeaderTopBitZeroed, 8), "PNG 8-byte header top bit zeroed");
-    check(runtime, 0 != memcmp(buff, kPngHeaderDos2Unix, 7), "PNG 8-byte header looks like after dos2unix");
-    check(runtime, 0 != memcmp(buff, kPngHeaderUnix2Dos, 9), "PNG 8-byte header looks like after unix2dos");
-    check(runtime, 0 != memcmp(buff, kPngHeaderUnix2DosBad, 10), "PNG 8-byte header looks like after bad \\n to \\r\\n conversion");
+    ensure(runtime, 0 != memcmp(buff, kPngHeaderTopBitZeroed, 8), "PNG 8-byte header top bit zeroed");
+    ensure(runtime, 0 != memcmp(buff, kPngHeaderDos2Unix, 7), "PNG 8-byte header looks like after dos2unix");
+    ensure(runtime, 0 != memcmp(buff, kPngHeaderUnix2Dos, 9), "PNG 8-byte header looks like after unix2dos");
+    ensure(runtime, 0 != memcmp(buff, kPngHeaderUnix2DosBad, 10), "PNG 8-byte header looks like after bad \\n to \\r\\n conversion");
 
     /* common mangling errors that mng header catches */
-    check(runtime, 0 != memcmp(buff, kMngHeaderTopBitZeroed, 8), "MNG 8-byte header top bit zeroed, this tool only handles PNG");
-    check(runtime, 0 != memcmp(buff, kMngHeaderDos2Unix, 7), "MNG 8-byte header looks like after dos2unix, this tool only handles PNG");
-    check(runtime, 0 != memcmp(buff, kMngHeaderUnix2Dos, 9), "MNG 8-byte header looks like after unix2dos, this tool only handles PNG");
-    check(runtime, 0 != memcmp(buff, kMngHeaderUnix2DosBad, 10), "MNG 8-byte header looks like after bad \\n to \\r\\n conversion, this tool only handles PNG");
+    ensure(runtime, 0 != memcmp(buff, kMngHeaderTopBitZeroed, 8), "MNG 8-byte header top bit zeroed, this tool only handles PNG");
+    ensure(runtime, 0 != memcmp(buff, kMngHeaderDos2Unix, 7), "MNG 8-byte header looks like after dos2unix, this tool only handles PNG");
+    ensure(runtime, 0 != memcmp(buff, kMngHeaderUnix2Dos, 9), "MNG 8-byte header looks like after unix2dos, this tool only handles PNG");
+    ensure(runtime, 0 != memcmp(buff, kMngHeaderUnix2DosBad, 10), "MNG 8-byte header looks like after bad \\n to \\r\\n conversion, this tool only handles PNG");
 
     /* if valid mng header print that this program is for png only */
-    check(runtime, 0 != memcmp(buff, kMngHeaderGood, 8), "MNG 8-byte header valid, this tool only handles PNG");
+    ensure(runtime, 0 != memcmp(buff, kMngHeaderGood, 8), "MNG 8-byte header valid, this tool only handles PNG");
 
     /* common mangling errors that jng header catches */
-    check(runtime, 0 != memcmp(buff, kJngHeaderTopBitZeroed, 8), "JNG 8-byte header top bit zeroed, this tool only handles PNG");
-    check(runtime, 0 != memcmp(buff, kJngHeaderDos2Unix, 7), "JNG 8-byte header looks like after dos2unix, this tool only handles PNG");
-    check(runtime, 0 != memcmp(buff, kJngHeaderUnix2Dos, 9), "JNG 8-byte header looks like after unix2dos, this tool only handles PNG");
-    check(runtime, 0 != memcmp(buff, kJngHeaderUnix2DosBad, 10), "JNG 8-byte header looks like after bad \\n to \\r\\n conversion, this tool only handles PNG");
+    ensure(runtime, 0 != memcmp(buff, kJngHeaderTopBitZeroed, 8), "JNG 8-byte header top bit zeroed, this tool only handles PNG");
+    ensure(runtime, 0 != memcmp(buff, kJngHeaderDos2Unix, 7), "JNG 8-byte header looks like after dos2unix, this tool only handles PNG");
+    ensure(runtime, 0 != memcmp(buff, kJngHeaderUnix2Dos, 9), "JNG 8-byte header looks like after unix2dos, this tool only handles PNG");
+    ensure(runtime, 0 != memcmp(buff, kJngHeaderUnix2DosBad, 10), "JNG 8-byte header looks like after bad \\n to \\r\\n conversion, this tool only handles PNG");
 
     /* if valid jng header print that this program is not for jng */
-    check(runtime, 0 != memcmp(buff, kJngHeaderGood, 8), "JNG 8-byte header valid, this tool only handles PNG");
+    ensure(runtime, 0 != memcmp(buff, kJngHeaderGood, 8), "JNG 8-byte header valid, this tool only handles PNG");
 
     /* jpeg, jpg, jfif, etc. files seem to start with these 3 bytes */
-    check(runtime, 0 != memcmp(buff, kJpegTriByteStart, 3), "starts with 0xff 0xd8 0xff, like a JPEG file");
+    ensure(runtime, 0 != memcmp(buff, kJpegTriByteStart, 3), "starts with 0xff 0xd8 0xff, like a JPEG file");
 
     /* gif files start with ascii GIF + version, like 87a, 89a, so just look at first 3 bytes */
-    check(runtime, 0 != memcmp(buff, "GIF", 3), "starts with 'GIF', like a GIF file");
+    ensure(runtime, 0 != memcmp(buff, "GIF", 3), "starts with 'GIF', like a GIF file");
 
     /* webp file which is in a riff container */
-    check(runtime, (0 != memcmp(buff, "RIFF", 4)) || (0 != memcmp(buff + 8, "WEBP", 4)),
+    ensure(runtime, (0 != memcmp(buff, "RIFF", 4)) || (0 != memcmp(buff + 8, "WEBP", 4)),
         "starts with 'RIFF' and has 'WEBP' on offset 8, like a WEBP file");
 
     /* any riff file other than webp */
-    check(runtime, 0 != memcmp(buff, "RIFF", 4), "starts with 'RIFF', but has no 'WEBP' at offset 8");
+    ensure(runtime, 0 != memcmp(buff, "RIFF", 4), "starts with 'RIFF', but has no 'WEBP' at offset 8");
 
     /* bmp files starts with BM + length, etc. not BMP! */
-    check(runtime, 0 != memcmp(buff, "BM", 2), "starts with 'BM', like a BMP file");
+    ensure(runtime, 0 != memcmp(buff, "BM", 2), "starts with 'BM', like a BMP file");
 
     /* catches all other unknown errors so keep last */
-    check(runtime, 0 == memcmp(buff, kPngHeaderGood, 8), "PNG 8-byte header has unknown wrong values");
+    if(0 != memcmp(buff, kPngHeaderGood, 8))
+    {
+        char errmsg[200];
+        int i;
+
+        strcpy(errmsg, "PNG 8-byte header has unknown wrong values:");
+        for(i = 0; i < 8; ++i)
+            sprintf(strchr(errmsg, '\0'), " 0x%02x", (unsigned char)buff[i]);
+
+        strcat(errmsg, " \"");
+        for(i = 0; i < 8; ++i)
+            sprintf(strchr(errmsg, '\0'), "%c", to_printable(buff[i]));
+
+        strcat(errmsg, "\"");
+        error(runtime, errmsg);
+    }
 }
 
 static int valid_bitdepth_and_colortype(int bitdepth, int colortype)
@@ -301,9 +329,9 @@ static void verify_png_header_and_ihdr(struct myruntime * runtime)
     check_png_header(runtime, buff);
 
     /* now check IHDR */
-    check(runtime, 0 == strncmp(buff + 8 + 4, "IHDR", 4) , "first chunk isn't IHDR");
+    ensure(runtime, 0 == strncmp(buff + 8 + 4, "IHDR", 4) , "first chunk isn't IHDR");
     len = big_u32(buff + 8);
-    check(runtime, len == 13u , "IHDR length isn't 13");
+    ensure(runtime, len == 13u , "IHDR length isn't 13");
     skip(runtime, 4); /* skip over CRC of IHDR */
     pretty_print_ihdr(buff + 8 + 8);
     ++runtime->chunks;
@@ -492,7 +520,7 @@ static int parse_png_chunk(struct myruntime * runtime)
     int isidat;
     read(runtime, buff, 8);
     buff[8] = '\0';
-    check(runtime, 0 != strncmp(buff + 4, "IHDR", 4), "duplicate IHDR");
+    ensure(runtime, 0 != strncmp(buff + 4, "IHDR", 4), "duplicate IHDR");
     isidat = (0 == strncmp(buff + 4, "IDAT", 4));
     len = big_u32(buff);
     usedbyextra = 0u; /* set to 0 in case the if doesnt run its body */
