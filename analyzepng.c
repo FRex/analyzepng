@@ -1,24 +1,25 @@
 #ifdef _MSC_VER
 #define _CRT_SECURE_NO_WARNINGS
-#define WINDOWS_NO_LINE_CONVERSIONS
+#define ANALYZEPNG_ON_WINDOWS
 #endif
-#include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <setjmp.h>
+#include <stdio.h>
+#include <math.h>
 
-#ifdef WINDOWS_NO_LINE_CONVERSIONS
+#ifdef ANALYZEPNG_ON_WINDOWS
 #include <fcntl.h>
 #include <io.h>
 #endif
 
 static void ensureNoWindowsLineConversions(void)
 {
-#ifdef WINDOWS_NO_LINE_CONVERSIONS
+#ifdef ANALYZEPNG_ON_WINDOWS
     _setmode(_fileno(stdin), _O_BINARY);
     _setmode(_fileno(stdout), _O_BINARY);
     _setmode(_fileno(stderr), _O_BINARY);
-#endif /* WINDOWS_NO_LINE_CONVERSIONS */
+#endif /* ANALYZEPNG_ON_WINDOWS */
 }
 
 static int my_utf8_main(int argc, char ** argv);
@@ -68,6 +69,8 @@ static int print_usage(const char * argv0, FILE * f)
     fprintf(f, "Usage: %s [--no-idat] file.png...\n", argv0);
     fprintf(f, "    --h OR --help #print this help to stdout\n");
     fprintf(f, "    --no-idat #don't print IDAT chunk locations and sizes, can be anywhere\n");
+    fprintf(f, "    --plte #print RGB values from the PLTE chunk\n");
+    fprintf(f, "    --color-plte #print RGB values from the PLTE chunk using ANSI escape codes\n");
     fprintf(f, "    --set-bash-completion #print command to set bash completion\n");
     fprintf(f, "    --do-bash-completion #do completion based on args from bash\n");
     return 1;
@@ -78,6 +81,8 @@ struct myruntime
     jmp_buf jumper;
     FILE * f;
     int skipidat;
+    int showpalette;
+    int showpalettecolors;
     unsigned long long chunks;
     unsigned long long idatchunks;
     unsigned long long bytes;
@@ -394,6 +399,21 @@ static void print_escaped_binary_string(const char * str, unsigned len)
 
 #define MAX_TEXT_BUFF 4096
 
+static float RGBtoBrightness(const unsigned char * rgb)
+{
+    const float r = rgb[0];
+    const float g = rgb[1];
+    const float b = rgb[2];
+    return sqrt(0.299 * r * r + 0.587 * g * g + 0.114 * b * b);
+}
+
+static int compareRGB(const void * a, const void * b)
+{
+    const float ha = RGBtoBrightness((const unsigned char*)a);
+    const float hb = RGBtoBrightness((const unsigned char*)b);
+    return (ha > hb) - (ha < hb);
+}
+
 static unsigned print_extra_info(struct myruntime * runtime, unsigned len, const char * id)
 {
     if(0 == strcmp(id, "tEXt") || 0 == strcmp(id, "iTXt"))
@@ -431,6 +451,44 @@ static unsigned print_extra_info(struct myruntime * runtime, unsigned len, const
         print_escaped_binary_string(buff, len);
         return len;
     } /* if tEXt or iTXt */
+
+    if((runtime->showpalette || runtime->showpalettecolors) && 0 == strcmp(id, "PLTE"))
+    {
+        unsigned char palette[1000];
+        unsigned palettesize = len;
+        int i, extra = 0;
+        printf(", %u entries", palettesize / 3u);
+
+        if(palettesize > 3 * 256)
+        {
+            printf(" (%d too many, max is 256)", (len - 3 * 256) / 3);
+            extra = palettesize % 3;
+            palettesize = 3 * 256;
+        }
+
+        if(extra > 0)
+            printf(" and %d extraneous byte%s", extra, (extra > 1) ? "s" : "");
+
+        printf(", sorted by brightness: ");
+        read(runtime, palette, palettesize);
+        qsort(palette, palettesize / 3, 3, compareRGB);
+
+        for(i = 0; i < (int)palettesize; i += 3)
+        {
+            if(runtime->showpalettecolors)
+                printf("\033[48;2;%d;%d;%dm \033[0m", palette[i], palette[i + 1], palette[i + 2]);
+
+            if(runtime->showpalette)
+            {
+                if(i > 0)
+                    fputs(", ", stdout);
+
+                printf("%d %d %d", palette[i], palette[i + 1], palette[i + 2]);
+            }
+        }
+
+        return palettesize;
+    } /* if PLTE */
 
     if(0 == strcmp(id, "pHYs"))
     {
@@ -632,7 +690,7 @@ static int setjmp_and_doit(struct myruntime * runtime)
     return 1;
 }
 
-static int parse_and_close_png_file(FILE * f, int skipidat)
+static int parse_and_close_png_file(FILE * f, int skipidat, int showpalette, int showpalettecolors)
 {
     struct myruntime runtime;
     int ret;
@@ -640,18 +698,20 @@ static int parse_and_close_png_file(FILE * f, int skipidat)
     memset(&runtime, 0x0, sizeof(struct myruntime));
     runtime.f = f;
     runtime.skipidat = skipidat;
+    runtime.showpalette = showpalette;
+    runtime.showpalettecolors = showpalettecolors;
     ret = setjmp_and_doit(&runtime);
     fclose(f);
     return ret;
 }
 
-static int handle_file(const char * fname, int skipidat)
+static int handle_file(const char * fname, int skipidat, int showpalette, int showpalettecolors)
 {
     FILE * f = my_utf8_fopen_rb(fname);
     if(f)
     {
         printf("File '%s'\n", fname);
-        return parse_and_close_png_file(f, skipidat);
+        return parse_and_close_png_file(f, skipidat, showpalette, showpalettecolors);
     }
 
     fprintf(stderr, "Error: fopen('%s') = NULL\n", fname);
@@ -690,9 +750,10 @@ static void fputs_with_escaped_slashes(const char * s, FILE * f)
     } /* while *s */
 }
 
-#define OPTION_STRINGS_COUNT 5
+#define OPTION_STRINGS_COUNT 7
 const char * const kAllOptionStrings[OPTION_STRINGS_COUNT] = {
     "--no-idat",
+    "--plte", "--color-plte",
     "-h", "--help",
     "--set-bash-completion", "--do-bash-completion",
 };
@@ -760,9 +821,59 @@ static int handle_completion(int argc, char ** argv)
     return 0;
 }
 
+static int enableConsoleColor(void)
+{
+#ifndef ANALYZEPNG_ON_WINDOWS
+    return 1; /* outside windows just assume it will work */
+#else
+    HANDLE console = GetStdHandle(STD_OUTPUT_HANDLE);
+    DWORD mode = 0u;
+
+    /* using 'Console' winapi func fails if stdout isn't a tty/is redirected so
+     * assume we just want to dump ANSI color sequences to file in that case */
+    if(!_isatty(_fileno(stdout)))
+        return 1;
+
+    if(console == INVALID_HANDLE_VALUE)
+    {
+        fprintf(
+            stderr,
+            "GetStdHandle(STD_OUTPUT_HANDLE) returned INVALID_HANDLE_VALUE, GetLastError() = %u\n",
+            (unsigned)GetLastError()
+        );
+        return 0;
+    }
+
+    if(console == NULL)
+    {
+        fprintf(stderr, "GetStdHandle(STD_OUTPUT_HANDLE) returned NULL\n");
+        return 0;
+    }
+
+    if(!GetConsoleMode(console, &mode))
+    {
+        fprintf(stderr, "GetConsoleMode(console, &mode) returned false, GetLastError() = %u\n",
+            (unsigned)GetLastError());
+        return 0;
+    }
+
+    /* ENABLE_VIRTUAL_TERMINAL_PROCESSING, by value in case its missing from header... */
+    mode |= 0x0004;
+
+    if(!SetConsoleMode(console, mode))
+    {
+        fprintf(stderr, "SetConsoleMode(console, mode) returned false, GetLastError() = %u\n",
+            (unsigned)GetLastError());
+        return 0;
+    }
+
+    return 1;
+#endif /* ANALYZEPNG_ON_WINDOWS */
+}
+
 static int my_utf8_main(int argc, char ** argv)
 {
-    int i, anyerrs, skipidat, files;
+    int i, anyerrs, skipidat, files, showpalette, showpalettecolors;
 
     ensureNoWindowsLineConversions();
     if(count_exact_option_presence(argc, argv, "-h") || count_exact_option_presence(argc, argv, "--help"))
@@ -777,21 +888,27 @@ static int my_utf8_main(int argc, char ** argv)
         return 0;
 
     skipidat = count_exact_option_presence(argc, argv, "--no-idat");
+    showpalette = count_exact_option_presence(argc, argv, "--plte");
+    showpalettecolors = count_exact_option_presence(argc, argv, "--color-plte");
     if((argc - skipidat) < 2)
         return print_usage(argv[0], stderr);
+
+    /* only enable colors if they're needed */
+    if(showpalettecolors)
+        enableConsoleColor();
 
     anyerrs = 0;
     files = 0;
     for(i = 1; i < argc; ++i)
     {
-        if(samestring(argv[i], "--no-idat"))
+        if(samestring(argv[i], "--no-idat") || samestring(argv[i], "--plte") || samestring(argv[i], "--color-plte"))
             continue;
 
         if(files > 0)
             printf("\n");
 
         ++files;
-        anyerrs += handle_file(argv[i], !!skipidat);
+        anyerrs += handle_file(argv[i], !!skipidat, !!showpalette, !!showpalettecolors);
     } /* for */
 
     return !!anyerrs;
