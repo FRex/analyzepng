@@ -88,6 +88,7 @@ struct myruntime
     unsigned long long chunks;
     unsigned long long idatchunks;
     unsigned long long bytes;
+    unsigned long long imagedatabytes;
 };
 
 static void read(struct myruntime * runtime, void * buff, int want)
@@ -263,10 +264,11 @@ static int valid_bitdepth_and_colortype(int bitdepth, int colortype)
     return 0;
 }
 
-static void pretty_print_ihdr(const char * ihdrdata13)
+static void pretty_print_ihdr(struct myruntime * runtime, const char * ihdrdata13)
 {
     unsigned w, h;
     int bitdepth, colortype, compressionmethod, filtermethod, interlacemethod;
+    unsigned long long bitsperpixel; /* u64 to not need a cast later to promote w and h */
 
     /* TODO: warn if these don't fit in 31 bits, as spec says? */
     w = big_u32(ihdrdata13 + 0);
@@ -282,6 +284,7 @@ static void pretty_print_ihdr(const char * ihdrdata13)
     printf("IHDR, 13 bytes at 16, %u x %u, %d-bit ", w, h, bitdepth);
 
     /* pretty print color format */
+    bitsperpixel = bitdepth;
     switch(colortype)
     {
         case 0:
@@ -289,20 +292,27 @@ static void pretty_print_ihdr(const char * ihdrdata13)
             break;
         case 2:
             printf("RGB");
+            bitsperpixel *= 3;
             break;
         case 3:
             printf("paletted");
+            bitsperpixel = 8 * 3; /* each palette entry is R8 G8 B8*/
             break;
         case 4:
             printf("greyscale with alpha");
+            bitsperpixel *= 2;
             break;
         case 6:
             printf("RGBA");
+            bitsperpixel *= 4;
             break;
         default:
             printf("unknown-colortype-%d", colortype);
             break;
     } /* switch colortype */
+
+    /* now we can calculate this, rounded up, bitsperpixel first to promote w and h to u64 */
+    runtime->imagedatabytes = ((bitsperpixel * w * h) + 7) / 8;
 
     /* nothing printed = valid combo */
     if(!valid_bitdepth_and_colortype(bitdepth, colortype))
@@ -340,7 +350,7 @@ static void verify_png_header_and_ihdr(struct myruntime * runtime)
     len = big_u32(buff + 8);
     ensure(runtime, len == 13u , "IHDR length isn't 13");
     skip(runtime, 4); /* skip over CRC of IHDR */
-    pretty_print_ihdr(buff + 8 + 8);
+    pretty_print_ihdr(runtime, buff + 8 + 8); /* also sets imagedatabytes in runtime */
     ++runtime->chunks;
 }
 
@@ -642,10 +652,15 @@ static void doit(struct myruntime * runtime)
 {
     verify_png_header_and_ihdr(runtime);
     while(parse_png_chunk(runtime));
-    printf("This PNG has: %llu chunks (%llu IDAT), %llu bytes (%.3f %s)\n",
-        runtime->chunks, runtime->idatchunks, runtime->bytes,
+    printf("This PNG has: %llu chunks (%llu IDAT), %llu bytes (%.3f %s) and contains %llu bytes (%.3f %s) of image data (%.2f%%)\n",
+        runtime->chunks, runtime->idatchunks,
+        runtime->bytes,
         pretty_filesize_amount(runtime->bytes),
-        pretty_filesize_unit(runtime->bytes)
+        pretty_filesize_unit(runtime->bytes),
+        runtime->imagedatabytes,
+        pretty_filesize_amount(runtime->imagedatabytes),
+        pretty_filesize_unit(runtime->imagedatabytes),
+        (100.0 * runtime->bytes) / runtime->imagedatabytes
     );
 
     check_for_trailing_data(runtime);
