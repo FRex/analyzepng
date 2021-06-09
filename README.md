@@ -10,7 +10,9 @@ On Windows, line `Info : BLA_WMAIN_USING_WMAIN_BOOLEAN = 1` in the help/usage
 message means that the exe can handle Unicode UTF-16 filenames, in the command
 output (`File ''` lines) they will be printed as UTF-8.
 
-Eval result of `--set-bash-completion` to set tab completion in bash.
+Eval result of `+set-bash-completion` to set tab completion in bash. The
+options meant for bash scripting start with a single `+` instead of `--` to
+not be completed when you type in `--` and trigger completion.
 
 ```
 $ analyzepng.exe -h
@@ -19,8 +21,10 @@ Info : BLA_WMAIN_USING_WMAIN_BOOLEAN = 1
 Usage: analyzepng.exe [--no-idat] file.png...
     --h OR --help #print this help to stdout
     --no-idat #don't print IDAT chunk locations and sizes, can be anywhere
-    --set-bash-completion #print command to set bash completion
-    --do-bash-completion #do completion based on args from bash
+    --plte #print RGB values from the PLTE chunk
+    --color-plte #print RGB values from the PLTE chunk using ANSI escape codes
+    +set-bash-completion #print command to set bash completion
+    +do-bash-completion #do completion based on args from bash
 ```
 
 ```
@@ -38,6 +42,7 @@ to avoid running into any `-O2` optimizer bug similar to this one that affected
 
 Option `--no-idat` skips printing `IDAT` chunks, which can be useful to not clutter
 the output if there are very many. Total `IDAT` count is still displayed at the end.
+Use `--plte` or `--color-plte` to print the palette from the `PLTE` chunk (if present).
 
 ```
 $ analyzepng 2000px-Pacman.png

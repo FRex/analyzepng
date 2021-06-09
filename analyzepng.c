@@ -71,8 +71,8 @@ static int print_usage(const char * argv0, FILE * f)
     fprintf(f, "    --no-idat #don't print IDAT chunk locations and sizes, can be anywhere\n");
     fprintf(f, "    --plte #print RGB values from the PLTE chunk\n");
     fprintf(f, "    --color-plte #print RGB values from the PLTE chunk using ANSI escape codes\n");
-    fprintf(f, "    --set-bash-completion #print command to set bash completion\n");
-    fprintf(f, "    --do-bash-completion #do completion based on args from bash\n");
+    fprintf(f, "    +set-bash-completion #print command to set bash completion\n");
+    fprintf(f, "    +do-bash-completion #do completion based on args from bash\n");
     return 1;
 }
 
@@ -755,7 +755,7 @@ const char * const kAllOptionStrings[OPTION_STRINGS_COUNT] = {
     "--no-idat",
     "--plte", "--color-plte",
     "-h", "--help",
-    "--set-bash-completion", "--do-bash-completion",
+    "+set-bash-completion", "+do-bash-completion",
 };
 
 static size_t count_matching_chars(const char * a, const char * b)
@@ -769,18 +769,18 @@ static size_t count_matching_chars(const char * a, const char * b)
 
 static int handle_completion(int argc, char ** argv)
 {
-    if(count_exact_option_presence(argc, argv, "--set-bash-completion"))
+    if(count_exact_option_presence(argc, argv, "+set-bash-completion"))
     {
         if(argc != 2)
-            fprintf(stderr, "warning: other arguments specified along with --set-bash-completion\n");
+            fprintf(stderr, "warning: other arguments specified along with +set-bash-completion\n");
 
         printf("complete -o default -C '");
         fputs_with_escaped_slashes(argv[0], stdout);
-        printf(" --do-bash-completion' %s\n", filepath_to_filename(argv[0]));
+        printf(" +do-bash-completion' %s\n", filepath_to_filename(argv[0]));
         return 1;
-    } /* --set-bash-completion present */
+    } /* +set-bash-completion present */
 
-    if(argc == 5 && samestring(argv[1], "--do-bash-completion"))
+    if(argc == 5 && samestring(argv[1], "+do-bash-completion"))
     {
         int i;
         size_t maxmatchlen, matchinglens[OPTION_STRINGS_COUNT];
@@ -808,16 +808,16 @@ static int handle_completion(int argc, char ** argv)
                 puts(kAllOptionStrings[i]);
 
         return 1;
-    } /* argc == 5 and argv[1] is --do-bash-completion */
+    } /* argc == 5 and argv[1] is +do-bash-completion */
 
-    if(count_exact_option_presence(argc, argv, "--do-bash-completion"))
+    if(count_exact_option_presence(argc, argv, "+do-bash-completion"))
     {
-        fprintf(stderr, "Error: wrong use or number of arguments to --do-bash-completion\n");
+        fprintf(stderr, "Error: wrong use or number of arguments to +do-bash-completion\n");
         print_usage(argv[0], stderr);
         return 1;
     }
 
-    /* no --set-bash-completion or --do-bash-completion at all */
+    /* no +set-bash-completion or +do-bash-completion at all */
     return 0;
 }
 
