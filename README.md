@@ -1,6 +1,7 @@
 # analyzepng
 
-Small stadalone C program to load png files and print info about their chunks.
+Small stadalone C program to load png files and print info about their chunks,
+and other general information (size, trailing data, compression efficiency).
 
 Tries to be robust, not print trash, handle any chunk length, etc. if chunk ID
 is not letters they will be printed as a hex number (see bad4cc.png below).
