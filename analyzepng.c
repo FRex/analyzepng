@@ -88,7 +88,9 @@ struct myruntime
     unsigned long long chunks;
     unsigned long long idatchunks;
     unsigned long long bytes;
-    unsigned long long imagedatabytes;
+    unsigned long long pixelcount;
+    int bitsperpixel;
+    int sbitbytes;
 };
 
 static void read(struct myruntime * runtime, void * buff, int want)
@@ -268,11 +270,11 @@ static void pretty_print_ihdr(struct myruntime * runtime, const char * ihdrdata1
 {
     unsigned w, h;
     int bitdepth, colortype, compressionmethod, filtermethod, interlacemethod;
-    unsigned long long bitsperpixel; /* u64 to not need a cast later to promote w and h */
 
     /* TODO: warn if these don't fit in 31 bits, as spec says? */
     w = big_u32(ihdrdata13 + 0);
     h = big_u32(ihdrdata13 + 4);
+    runtime->pixelcount = w * (unsigned long long)h;
 
     bitdepth = (unsigned char)ihdrdata13[8 + 0];
     colortype = (unsigned char)ihdrdata13[8 + 1];
@@ -284,35 +286,37 @@ static void pretty_print_ihdr(struct myruntime * runtime, const char * ihdrdata1
     printf("IHDR, 13 bytes at 16, %u x %u, %d-bit ", w, h, bitdepth);
 
     /* pretty print color format */
-    bitsperpixel = bitdepth;
+    runtime->bitsperpixel = bitdepth;
     switch(colortype)
     {
         case 0:
             printf("greyscale");
+            runtime->sbitbytes = 1;
             break;
         case 2:
             printf("RGB");
-            bitsperpixel *= 3;
+            runtime->bitsperpixel *= 3;
+            runtime->sbitbytes = 3;
             break;
         case 3:
             printf("paletted");
-            bitsperpixel = 8 * 3; /* each palette entry is R8 G8 B8*/
+            runtime->bitsperpixel = 8 * 3; /* each palette entry is R8 G8 B8*/
+            runtime->sbitbytes = 3;
             break;
         case 4:
             printf("greyscale with alpha");
-            bitsperpixel *= 2;
+            runtime->bitsperpixel *= 2;
+            runtime->sbitbytes = 2;
             break;
         case 6:
             printf("RGBA");
-            bitsperpixel *= 4;
+            runtime->bitsperpixel *= 4;
+            runtime->sbitbytes = 4;
             break;
         default:
             printf("unknown-colortype-%d", colortype);
             break;
     } /* switch colortype */
-
-    /* now we can calculate this, rounded up, bitsperpixel first to promote w and h to u64 */
-    runtime->imagedatabytes = ((bitsperpixel * w * h) + 7) / 8;
 
     /* nothing printed = valid combo */
     if(!valid_bitdepth_and_colortype(bitdepth, colortype))
@@ -350,7 +354,7 @@ static void verify_png_header_and_ihdr(struct myruntime * runtime)
     len = big_u32(buff + 8);
     ensure(runtime, len == 13u , "IHDR length isn't 13");
     skip(runtime, 4); /* skip over CRC of IHDR */
-    pretty_print_ihdr(runtime, buff + 8 + 8); /* also sets imagedatabytes in runtime */
+    pretty_print_ihdr(runtime, buff + 8 + 8); /* also sets some fields in runtime */
     ++runtime->chunks;
 }
 
@@ -524,6 +528,31 @@ static unsigned print_extra_info(struct myruntime * runtime, unsigned len, const
         return 9u;
     } /* if pHYs */
 
+    if(0 == strcmp(id, "sBIT"))
+    {
+        unsigned char buff[4]; /* up to 4 bytes sBIT is okay*/
+        int neededbytes, i;
+
+        neededbytes = runtime->sbitbytes;
+        fputs(",", stdout);
+        if(len != neededbytes)
+        {
+            printf(" expected %d sBIT bytes but got %u instead", neededbytes, len);
+            if(len < (unsigned)neededbytes)
+                neededbytes = (int)len;
+        }
+
+        read(runtime, buff, neededbytes);
+        runtime->bitsperpixel = 0;
+        for(i = 0; i < neededbytes; ++i)
+        {
+            printf(" %d", buff[i]);
+            runtime->bitsperpixel += buff[i];
+        }
+
+        return neededbytes;
+    } /* sBIT */
+
     if(0 == strcmp(id, "tIME"))
     {
         char buff[7];
@@ -650,17 +679,22 @@ static void check_for_trailing_data(struct myruntime * runtime)
 
 static void doit(struct myruntime * runtime)
 {
+    unsigned long long imagedatabytes;
+
     verify_png_header_and_ihdr(runtime);
     while(parse_png_chunk(runtime));
+
+    /* calculating it here and not in IDHR in case sBIT changed the 2nd field */
+    imagedatabytes = (runtime->pixelcount * runtime->bitsperpixel + 7) / 8;
     printf("This PNG has: %llu chunks (%llu IDAT), %llu bytes (%.3f %s) and contains %llu bytes (%.3f %s) of image data (%.2f%%)\n",
         runtime->chunks, runtime->idatchunks,
         runtime->bytes,
         pretty_filesize_amount(runtime->bytes),
         pretty_filesize_unit(runtime->bytes),
-        runtime->imagedatabytes,
-        pretty_filesize_amount(runtime->imagedatabytes),
-        pretty_filesize_unit(runtime->imagedatabytes),
-        (100.0 * runtime->bytes) / runtime->imagedatabytes
+        imagedatabytes,
+        pretty_filesize_amount(imagedatabytes),
+        pretty_filesize_unit(imagedatabytes),
+        (100.0 * runtime->bytes) / imagedatabytes
     );
 
     check_for_trailing_data(runtime);
