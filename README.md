@@ -6,9 +6,11 @@ Tries to be robust, not print trash, handle any chunk length, etc. if chunk ID
 is not letters they will be printed as a hex number (see bad4cc.png below).
 Should work on any OS and any C compiler.
 
-On Windows, line `Info : BLA_WMAIN_USING_WMAIN_BOOLEAN = 1` in the help/usage
-message means that the exe can handle Unicode UTF-16 filenames, in the command
-output (`File ''` lines) they will be printed as UTF-8.
+On Windows it should build with terminal color and UTF-16 filename support,
+this can be verified by presence of line `Windows build capableof colors and UTF-16 filenames`
+in the help/usage message. The UTF-16 filenames in the command output (`File ''` lines)
+they will be printed as UTF-8. On other OSes this line is not present and they are
+assumed to be using UTF-8 filenames and have color enabled terminals by default.
 
 Eval result of `+set-bash-completion` to set tab completion in bash. The
 options meant for bash scripting start with a single `+` instead of `--` to
@@ -17,7 +19,7 @@ not be completed when you type in `--` and trigger completion.
 ```
 $ analyzepng.exe -h
 analyzepng.exe - print information about chunks of given png files
-Info : BLA_WMAIN_USING_WMAIN_BOOLEAN = 1
+Windows build capableof colors and UTF-16 filenames
 Usage: analyzepng.exe [--no-idat] file.png...
     --h OR --help #print this help to stdout
     --no-idat #don't print IDAT chunk locations and sizes, can be anywhere

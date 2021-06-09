@@ -1,4 +1,4 @@
-#ifdef _MSC_VER
+#if defined(_MSC_VER) || defined(_WIN32) || defined(_WIN64)
 #define _CRT_SECURE_NO_WARNINGS
 #define ANALYZEPNG_ON_WINDOWS
 #endif
@@ -65,7 +65,9 @@ static int print_usage(const char * argv0, FILE * f)
 {
     argv0 = filepath_to_filename(argv0);
     fprintf(f, "%s - print information about chunks of given png files\n", argv0);
-    fprintf(f, "Info : BLA_WMAIN_USING_WMAIN_BOOLEAN = %d\n", BLA_WMAIN_USING_WMAIN_BOOLEAN);
+    if(BLA_WMAIN_USING_WMAIN_BOOLEAN)
+        fprintf(f, "Windows build capableof colors and UTF-16 filenames\n");
+
     fprintf(f, "Usage: %s [--no-idat] file.png...\n", argv0);
     fprintf(f, "    --h OR --help #print this help to stdout\n");
     fprintf(f, "    --no-idat #don't print IDAT chunk locations and sizes, can be anywhere\n");
