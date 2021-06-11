@@ -686,7 +686,7 @@ static void doit(struct myruntime * runtime)
 
     /* calculating it here and not in IDHR in case sBIT changed the 2nd field */
     imagedatabytes = (runtime->pixelcount * runtime->bitsperpixel + 7) / 8;
-    printf("This PNG has: %llu chunks (%llu IDAT), %llu bytes (%.3f %s) and contains %llu bytes (%.3f %s) of image data (%.2f%%)\n",
+    printf("This PNG has %llu chunks (%llu IDAT), %llu bytes (%.3f %s), encoding %llu bytes (%.3f %s) of image data (%.2f%%)\n",
         runtime->chunks, runtime->idatchunks,
         runtime->bytes,
         pretty_filesize_amount(runtime->bytes),
