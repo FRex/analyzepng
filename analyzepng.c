@@ -491,16 +491,14 @@ static unsigned print_extra_info(struct myruntime * runtime, unsigned len, const
 
         for(i = 0; i < (int)palettesize; i += 3)
         {
+            if(runtime->showpalette && i > 0)
+                fputs(", ", stdout);
+
             if(runtime->showpalettecolors)
                 printf("\033[48;2;%d;%d;%dm \033[0m", palette[i], palette[i + 1], palette[i + 2]);
 
             if(runtime->showpalette)
-            {
-                if(i > 0)
-                    fputs(", ", stdout);
-
                 printf("%d %d %d", palette[i], palette[i + 1], palette[i + 2]);
-            }
         }
 
         return palettesize;
