@@ -17,6 +17,10 @@ Eval result of `+set-bash-completion` to set tab completion in bash. The
 options meant for bash scripting start with a single `+` instead of `--` to
 not be completed when you type in `--` and trigger completion.
 
+Note: some examples are from previous versions and the formatting might differ
+a little from the latest version, the first two examples (`-h` and `test.png`
+are always up to date).
+
 ```
 $ analyzepng.exe -h
 analyzepng.exe - print information about chunks of given png files
@@ -36,7 +40,7 @@ File 'test.png'
 IHDR, 13 bytes at 16, 206 x 131, 8-bit RGBA
 IDAT, 31814 bytes at 41
 IEND, 0 bytes at 31867
-This PNG has: 3 chunks (1 IDAT), 31871 bytes (31.124 KiB) and contains 107944 bytes (105.414 KiB) of image data (29.53%)
+This PNG has 3 chunks (1 IDAT), 31871 bytes (31.124 KiB), encoding 107944 bytes (105.414 KiB) of image data (29.53%)
 ```
 
 Go to releases to download a Windows exe compiled with Pelles C with no `-O2`
