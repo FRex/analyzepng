@@ -64,8 +64,10 @@ IDAT, 8192 bytes at 41061
 IDAT, 8192 bytes at 49265
 IDAT, 8087 bytes at 57469
 IEND, 0 bytes at 65568
-This PNG has: 10 chunks (8 IDAT), 65572 bytes (64.035 KiB) and contains 16856000 bytes (16.075 MiB) of image data (0.39%)
+This PNG has 10 chunks (8 IDAT), 65572 bytes (64.035 KiB), encoding 16856000 bytes (16.075 MiB) of image data (0.39%)
+```
 
+```
 $ analyzepng.exe --no-idat 2000px-Pacman.png
 File '2000px-Pacman.png'
 IHDR, 13 bytes at 16, 2000 x 2107, 8-bit RGBA
@@ -80,7 +82,7 @@ IHDR, 13 bytes at 16, 39 x 31, 1-bit paletted
 PLTE, 6 bytes at 41
 IDAT, 125 bytes at 59
 IEND, 0 bytes at 196
-This PNG has: 4 chunks (1 IDAT), 200 bytes (0.195 KiB) and contains 3627 bytes (3.542 KiB) of image data (5.51%)
+This PNG has 4 chunks (1 IDAT), 200 bytes (0.195 KiB), encoding 3627 bytes (3.542 KiB) of image data (5.51%)
 Error: 6 bytes (0.006 KiB) of trailing data
 
 File 'adam7.png'
@@ -91,7 +93,7 @@ tIME, 7 bytes at 80, 2005-03-10 11:52:57
 tEXt, 8 bytes at 99, full (as ASCII + escapes): Comment\0
 IDAT, 571 bytes at 119
 IEND, 0 bytes at 702
-This PNG has: 7 chunks (1 IDAT), 706 bytes (0.689 KiB) and contains 1024 bytes (1.000 KiB) of image data (68.95%)
+This PNG has 7 chunks (1 IDAT), 706 bytes (0.689 KiB), encoding 1024 bytes (1.000 KiB) of image data (68.95%)
 ```
 
 ```
@@ -139,7 +141,7 @@ IHDR, 13 bytes at 16, 39 x 31, 1-bit paletted
 PLTE, 6 bytes at 41
 0x00004154, 125 bytes at 59
 IEND, 0 bytes at 196
-This PNG has: 4 chunks (0 IDAT), 200 bytes (0.195 KiB) and contains 3627 bytes (3.542 KiB) of image data (5.51%)
+This PNG has 4 chunks (0 IDAT), 200 bytes (0.195 KiB), encoding 3627 bytes (3.542 KiB) of image data (5.51%)
 ```
 
 ```
@@ -152,5 +154,5 @@ IDAT, 98899 bytes at 99
 fcTL, 26 bytes at 99010, APNG frame control
 fdAT, 236069 bytes at 99048, APNG frame data
 IEND, 0 bytes at 335129
-This PNG has: 7 chunks (1 IDAT), 335133 bytes (327.278 KiB) and contains 864900 bytes (844.629 KiB) of image data (38.75%)
+This PNG has 7 chunks (1 IDAT), 335133 bytes (327.278 KiB), encoding 864900 bytes (844.629 KiB) of image data (38.75%)
 ```
