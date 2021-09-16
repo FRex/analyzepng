@@ -76,7 +76,7 @@ static int print_usage(const char * argv0, FILE * f)
     argv0 = filepath_to_filename(argv0);
     fprintf(f, "%s - print information about chunks of given png files\n", argv0);
     if(BLA_WMAIN_USING_WMAIN_BOOLEAN)
-        fprintf(f, "Windows build capableof colors and UTF-16 filenames\n");
+        fprintf(f, "Windows build capable of colors and UTF-16 filenames\n");
 
     fprintf(f, "Usage: %s [--no-idat] file.png...\n", argv0);
     fprintf(f, "    --h OR --help #print this help to stdout\n");

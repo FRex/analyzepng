@@ -8,7 +8,7 @@ is not letters they will be printed as a hex number (see bad4cc.png below).
 Should work on any OS and any C compiler.
 
 On Windows it should build with terminal color and UTF-16 filename support,
-this can be verified by presence of line `Windows build capableof colors and UTF-16 filenames`
+this can be verified by presence of line `Windows build capable of colors and UTF-16 filenames`
 in the help/usage message. The UTF-16 filenames in the command output (`File ''` lines)
 they will be printed as UTF-8. On other OSes this line is not present and they are
 assumed to be using UTF-8 filenames and have color enabled terminals by default.
@@ -24,7 +24,7 @@ are always up to date).
 ```
 $ analyzepng.exe -h
 analyzepng.exe - print information about chunks of given png files
-Windows build capableof colors and UTF-16 filenames
+Windows build capable of colors and UTF-16 filenames
 Usage: analyzepng.exe [--no-idat] file.png...
     --h OR --help #print this help to stdout
     --no-idat #don't print IDAT chunk locations and sizes, can be anywhere
