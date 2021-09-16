@@ -26,6 +26,7 @@ static int isoption(const char * arg)
 #ifdef __OpenBSD__
 #include <unistd.h>
 #include <err.h>
+#define OPENBSD_PLEDGE_AND_UNVEIL_USED 1
 static void applyOpenBsdRestrictions(int argc, char ** argv)
 {
     int i;
@@ -33,13 +34,15 @@ static void applyOpenBsdRestrictions(int argc, char ** argv)
     /* hide all files except the filename arguments */
     for(i = 1; i < argc; ++i)
         if(!isoption(argv[i]))
-            unveil(argv[i], "r");
+            if(unveil(argv[i], "r") == -1)
+                err(1, "unveil");
 
     /* only allow stdio and reading files, this also takes away ability to unveil */
     if(pledge("stdio rpath", NULL) == -1)
         err(1, "pledge");
 }
 #else
+#define OPENBSD_PLEDGE_AND_UNVEIL_USED 0
 static void applyOpenBsdRestrictions(int argc, char ** argv) {}
 #endif /* __OpenBSD__ */
 
@@ -107,6 +110,9 @@ static int print_usage(const char * argv0, FILE * f)
     fprintf(f, "%s - print information about chunks of given png files\n", argv0);
     if(BLA_WMAIN_USING_WMAIN_BOOLEAN)
         fprintf(f, "Windows build capable of colors and UTF-16 filenames\n");
+
+    if(OPENBSD_PLEDGE_AND_UNVEIL_USED)
+        fprintf(f, "OpenBSD build using pledge(2) and unveil(2) for extra safety\n");
 
     fprintf(f, "Usage: %s [--no-idat] file.png...\n", argv0);
     fprintf(f, "    --h OR --help #print this help to stdout\n");
