@@ -23,8 +23,18 @@ static void ensureNoWindowsLineConversions(void)
 }
 
 static int my_utf8_main(int argc, char ** argv);
+
+/* we do ifdefs around Windows already and this lets us be 1 .c file on other OSes */
+#ifdef ANALYZEPNG_ON_WINDOWS
 #define BLA_WMAIN_FUNC my_utf8_main
 #include "blawmain.h"
+#else
+#define BLA_WMAIN_USING_WMAIN_BOOLEAN 0
+int main(int argc, char ** argv)
+{
+    return my_utf8_main(argc, argv);
+}
+#endif
 
 static double pretty_filesize_amount(unsigned long long bytes)
 {
