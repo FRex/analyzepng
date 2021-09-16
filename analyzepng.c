@@ -13,6 +13,36 @@
 #include <io.h>
 #endif
 
+static int samestring(const char * a, const char * b)
+{
+    return 0 == strcmp(a,b);
+}
+
+static int isoption(const char * arg)
+{
+    return samestring(arg, "--no-idat") || samestring(arg, "--plte") || samestring(arg, "--color-plte");
+}
+
+#ifdef __OpenBSD__
+#include <unistd.h>
+#include <err.h>
+static void applyOpenBsdRestrictions(int argc, char ** argv)
+{
+    int i;
+
+    /* hide all files except the filename arguments */
+    for(i = 1; i < argc; ++i)
+        if(!isoption(argv[i]))
+            unveil(argv[i], "r");
+
+    /* only allow stdio and reading files, this also takes away ability to unveil */
+    if(pledge("stdio rpath", NULL) == -1)
+        err(1, "pledge");
+}
+#else
+static void applyOpenBsdRestrictions(int argc, char ** argv) {}
+#endif /* __OpenBSD__ */
+
 static void ensureNoWindowsLineConversions(void)
 {
 #ifdef ANALYZEPNG_ON_WINDOWS
@@ -103,7 +133,8 @@ struct myruntime
     int sbitbytes;
 };
 
-static void read(struct myruntime * runtime, void * buff, int want)
+/* named myread to not conflict with POSIX function of same name */
+static void myread(struct myruntime * runtime, void * buff, int want)
 {
     const int got = fread(buff, 1, want, runtime->f);
     if(got != want)
@@ -354,7 +385,7 @@ static void verify_png_header_and_ihdr(struct myruntime * runtime)
     unsigned len;
 
     /* 8 for png header, 8 for len and id and 13 for data of IHDR */
-    read(runtime, buff, 8 + 8 + 13);
+    myread(runtime, buff, 8 + 8 + 13);
 
     /* check png header itself for common errors and if its mng or jng instead */
     check_png_header(runtime, buff);
@@ -451,7 +482,7 @@ static unsigned print_extra_info(struct myruntime * runtime, unsigned len, const
         if(truncated)
             len = MAX_TEXT_BUFF;
 
-        read(runtime, buff, len);
+        myread(runtime, buff, len);
 
         if(0 == strcmp(id, "iTXt"))
         {
@@ -496,7 +527,7 @@ static unsigned print_extra_info(struct myruntime * runtime, unsigned len, const
             printf(" and %d extraneous byte%s", extra, (extra > 1) ? "s" : "");
 
         printf(", sorted by brightness: ");
-        read(runtime, palette, palettesize);
+        myread(runtime, palette, palettesize);
         qsort(palette, palettesize / 3, 3, compareRGB);
 
         for(i = 0; i < (int)palettesize; i += 3)
@@ -525,7 +556,7 @@ static unsigned print_extra_info(struct myruntime * runtime, unsigned len, const
             return 0u;
         }
 
-        read(runtime, buff, 9u);
+        myread(runtime, buff, 9u);
         x = big_u32(buff + 0);
         y = big_u32(buff + 4);
         if(buff[8] == 1)
@@ -550,7 +581,7 @@ static unsigned print_extra_info(struct myruntime * runtime, unsigned len, const
                 neededbytes = (int)len;
         }
 
-        read(runtime, buff, neededbytes);
+        myread(runtime, buff, neededbytes);
         runtime->bitsperpixel = 0;
         for(i = 0; i < neededbytes; ++i)
         {
@@ -572,7 +603,7 @@ static unsigned print_extra_info(struct myruntime * runtime, unsigned len, const
             return 0u;
         }
 
-        read(runtime, buff, 7u);
+        myread(runtime, buff, 7u);
         year = (unsigned char)buff[0];
         year = (year << 8) + (unsigned char)buff[1];
         printf(
@@ -594,7 +625,7 @@ static unsigned print_extra_info(struct myruntime * runtime, unsigned len, const
             return 0u;
         }
 
-        read(runtime, &intent, 1u);
+        myread(runtime, &intent, 1u);
         switch(intent)
         {
         case 0:
@@ -625,7 +656,7 @@ static int parse_png_chunk(struct myruntime * runtime)
     char buff[10];
     unsigned len, usedbyextra;
     int isidat;
-    read(runtime, buff, 8);
+    myread(runtime, buff, 8);
     buff[8] = '\0';
     ensure(runtime, 0 != strncmp(buff + 4, "IHDR", 4), "duplicate IHDR");
     isidat = (0 == strncmp(buff + 4, "IDAT", 4));
@@ -775,11 +806,6 @@ static int handle_file(const char * fname, int skipidat, int showpalette, int sh
 
     fprintf(stderr, "Error: fopen('%s') = NULL\n", fname);
     return 1;
-}
-
-static int samestring(const char * a, const char * b)
-{
-    return 0 == strcmp(a,b);
 }
 
 static int count_exact_option_presence(int argc, char ** argv, const char * option)
@@ -934,6 +960,7 @@ static int my_utf8_main(int argc, char ** argv)
 {
     int i, anyerrs, skipidat, files, showpalette, showpalettecolors;
 
+    applyOpenBsdRestrictions(argc, argv);
     ensureNoWindowsLineConversions();
     if(count_exact_option_presence(argc, argv, "-h") || count_exact_option_presence(argc, argv, "--help"))
     {
@@ -960,7 +987,7 @@ static int my_utf8_main(int argc, char ** argv)
     files = 0;
     for(i = 1; i < argc; ++i)
     {
-        if(samestring(argv[i], "--no-idat") || samestring(argv[i], "--plte") || samestring(argv[i], "--color-plte"))
+        if(isoption(argv[i]))
             continue;
 
         if(files > 0)
