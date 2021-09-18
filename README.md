@@ -15,6 +15,12 @@ in the help/usage message. The UTF-16 filenames in the command output (`File ''`
 they will be printed as UTF-8. On other OSes this line is not present and they are
 assumed to be using UTF-8 filenames and have color enabled terminals by default.
 
+If `-` is used as fileame it will read from stdin. This allows not using a
+temporary file on disk when using `curl` or some program that generates a png
+on its stdout, but for a file already on disk it will be slower because piping
+data in requires reading it all and discarding the majority of it, while a disk
+file can seek and read only the parts that are needed.
+
 On OpenBSD it also uses [pledge(2)](https://man.openbsd.org/pledge.2) and
 [unveil(2)](https://man.openbsd.org/unveil.2) to allow only read only access
 of only the files passed in as arguments, to improve security.
@@ -31,7 +37,7 @@ are always up to date).
 $ analyzepng.exe -h
 analyzepng.exe - print information about chunks of given png files
 Windows build capable of colors and UTF-16 filenames
-Usage: analyzepng.exe [--no-idat] file.png...
+Usage: analyzepng.exe [--no-idat] file.png... # a single - means read from stdin
     --h OR --help #print this help to stdout
     --no-idat #don't print IDAT chunk locations and sizes, can be anywhere
     --plte #print RGB values from the PLTE chunk

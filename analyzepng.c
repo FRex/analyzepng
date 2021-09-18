@@ -29,17 +29,32 @@ static int isoption(const char * arg)
 #define OPENBSD_PLEDGE_AND_UNVEIL_USED 1
 static void applyOpenBsdRestrictions(int argc, char ** argv)
 {
-    int i;
+    int i, unveiled;
 
-    /* hide all files except the filename arguments */
+    /* hide all files except the filename arguments, skip "-" too, because it means stdin */
+    unveiled = 0;
     for(i = 1; i < argc; ++i)
-        if(!isoption(argv[i]))
-            if(unveil(argv[i], "r") == -1)
-                err(1, "unveil");
+    {
+        if(isoption(argv[i]) || samestring(argv[i], "-"))
+            continue;
 
-    /* only allow stdio and reading files, this also takes away ability to unveil */
-    if(pledge("stdio rpath", NULL) == -1)
-        err(1, "pledge");
+        ++unveiled;
+        if(unveil(argv[i], "r") == -1)
+            err(1, "unveil");
+    }
+
+    if(unveiled == 0)
+    {
+        /* only allow stdio and no disk access, since we have 0 files on disk to process */
+        if(pledge("stdio", NULL) == -1)
+            err(1, "pledge");
+    }
+    else
+    {
+        /* only allow stdio and reading files, this also takes away ability to unveil */
+        if(pledge("stdio rpath", NULL) == -1)
+            err(1, "pledge");
+    }
 }
 #else
 #define OPENBSD_PLEDGE_AND_UNVEIL_USED 0
@@ -114,7 +129,7 @@ static int print_usage(const char * argv0, FILE * f)
     if(OPENBSD_PLEDGE_AND_UNVEIL_USED)
         fprintf(f, "OpenBSD build using pledge(2) and unveil(2) for extra safety\n");
 
-    fprintf(f, "Usage: %s [--no-idat] file.png...\n", argv0);
+    fprintf(f, "Usage: %s [--no-idat] file.png... # a single - means read from stdin\n", argv0);
     fprintf(f, "    --h OR --help #print this help to stdout\n");
     fprintf(f, "    --no-idat #don't print IDAT chunk locations and sizes, can be anywhere\n");
     fprintf(f, "    --plte #print RGB values from the PLTE chunk\n");
@@ -165,8 +180,35 @@ static void skip_step_int(struct myruntime * runtime, int amount)
     runtime->bytes += amount;
 }
 
+static void error(struct myruntime * runtime, const char * errmsg)
+{
+    fprintf(stderr, "Error: %s\n", errmsg);
+    longjmp(runtime->jumper, 1);
+}
+
+#define SKIP_THROWAWAY_BUFF_SIZE (32 * 1024 * 1024)
+static char skipThrowawayBuff[SKIP_THROWAWAY_BUFF_SIZE];
+
 static void skip(struct myruntime * runtime, unsigned amount)
 {
+    /* if it's stdin then read to skip since fseek doesn't work */
+    if(runtime->f == stdin)
+    {
+        while(amount > 0)
+        {
+            unsigned toread = SKIP_THROWAWAY_BUFF_SIZE;
+            if(amount < toread)
+                toread = amount;
+
+            if(toread != fread(skipThrowawayBuff, 1, toread, runtime->f))
+                error(runtime, "fread on stdin failed or truncated");
+
+            amount -= toread;
+        } /* while amount > 0 */
+
+        return;
+    }
+
     const int step = 1900000000;
     while(amount >= (unsigned)step)
     {
@@ -174,12 +216,6 @@ static void skip(struct myruntime * runtime, unsigned amount)
         amount -= step;
     }
     skip_step_int(runtime, (int)amount);
-}
-
-static void error(struct myruntime * runtime, const char * errmsg)
-{
-    fprintf(stderr, "Error: %s\n", errmsg);
-    longjmp(runtime->jumper, 1);
 }
 
 /* ensures b - does nothing if its true, prints Errr: errmsg and longjmps if its false */
@@ -797,16 +833,29 @@ static int parse_and_close_png_file(FILE * f, int skipidat, int showpalette, int
     runtime.showpalette = showpalette;
     runtime.showpalettecolors = showpalettecolors;
     ret = setjmp_and_doit(&runtime);
-    fclose(f);
+
+    /* if it was stdin then don't close it */
+    if(f != stdin)
+        fclose(f);
+
     return ret;
 }
 
 static int handle_file(const char * fname, int skipidat, int showpalette, int showpalettecolors)
 {
-    FILE * f = my_utf8_fopen_rb(fname);
+    FILE * f;
+    if(samestring(fname, "-"))
+        f = stdin;
+    else
+        f = my_utf8_fopen_rb(fname);
+
     if(f)
     {
-        printf("File '%s'\n", fname);
+        if(samestring(fname, "-"))
+            printf("File '<stdin>'\n");
+        else
+            printf("File '%s'\n", fname);
+
         return parse_and_close_png_file(f, skipidat, showpalette, showpalettecolors);
     }
 
