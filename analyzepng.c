@@ -204,6 +204,7 @@ static void skip(struct myruntime * runtime, unsigned amount)
                 error(runtime, "fread on stdin failed or truncated");
 
             amount -= toread;
+            runtime->bytes += toread;
         } /* while amount > 0 */
 
         return;
