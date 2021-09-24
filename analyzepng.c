@@ -9,6 +9,7 @@
 #include <math.h>
 
 #ifdef ANALYZEPNG_ON_WINDOWS
+#include <Windows.h>
 #include <fcntl.h>
 #include <io.h>
 #endif
