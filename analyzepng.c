@@ -505,7 +505,7 @@ static float RGBtoBrightness(const unsigned char * rgb)
     const float r = rgb[0];
     const float g = rgb[1];
     const float b = rgb[2];
-    return sqrt(0.299 * r * r + 0.587 * g * g + 0.114 * b * b);
+    return sqrt(0.299 * (r * r) + 0.587 * (g * g) + 0.114 * (b * b));
 }
 
 static int compareRGB(const void * a, const void * b)
