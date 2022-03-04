@@ -82,6 +82,7 @@ This PNG has 10 chunks (8 IDAT), 65572 bytes (64.035 KiB), encoding 16856000 byt
 ```
 
 ```
+$ analyzepng.exe --crc test.png
 File 'test.png'
 IHDR, 13 bytes at 16, 206 x 131, 8-bit RGBA, OK CRC 0xc5d92476
 IDAT, 31814 bytes at 41, OK CRC 0xd26bc80c
