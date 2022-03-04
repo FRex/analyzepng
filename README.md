@@ -42,6 +42,7 @@ Usage: analyzepng.exe [--no-idat] file.png... # a single - means read from stdin
     --no-idat #don't print IDAT chunk locations and sizes, can be anywhere
     --plte #print RGB values from the PLTE chunk
     --color-plte #print RGB values from the PLTE chunk using ANSI escape codes
+    --crc #verify CRC checksums of the chunks, slow for big files
     +set-bash-completion #print command to set bash completion
     +do-bash-completion #do completion based on args from bash
 ```
@@ -62,6 +63,7 @@ to avoid running into any `-O2` optimizer bug similar to this one that affected
 Option `--no-idat` skips printing `IDAT` chunks, which can be useful to not clutter
 the output if there are very many. Total `IDAT` count is still displayed at the end.
 Use `--plte` or `--color-plte` to print the palette from the `PLTE` chunk (if present).
+Option `--crc` calculates CRC of each chunk and compares it to CRC stored in the file.
 
 ```
 $ analyzepng.exe 2000px-Pacman.png
@@ -77,6 +79,14 @@ IDAT, 8192 bytes at 49265
 IDAT, 8087 bytes at 57469
 IEND, 0 bytes at 65568
 This PNG has 10 chunks (8 IDAT), 65572 bytes (64.035 KiB), encoding 16856000 bytes (16.075 MiB) of image data (0.39%)
+```
+
+```
+File 'test.png'
+IHDR, 13 bytes at 16, 206 x 131, 8-bit RGBA, OK CRC 0xc5d92476
+IDAT, 31814 bytes at 41, OK CRC 0xd26bc80c
+IEND, 0 bytes at 31867, OK CRC 0xae426082
+This PNG has 3 chunks (1 IDAT), 31871 bytes (31.124 KiB), encoding 107944 bytes (105.414 KiB) of image data (29.53%), 0 bad CRC
 ```
 
 ```
