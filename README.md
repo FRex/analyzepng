@@ -91,6 +91,16 @@ This PNG has 3 chunks (1 IDAT), 31871 bytes (31.124 KiB), encoding 107944 bytes 
 ```
 
 ```
+$ analyzepng.exe --crc bad4cc.png
+File 'bad4cc.png'
+IHDR, 13 bytes at 16, 39 x 31, 1-bit paletted, OK CRC 0x5e4446b6
+PLTE, 6 bytes at 41, OK CRC 0xa5d99fdd
+0x00004154, 125 bytes at 59, WRONG CRC 0x005f858d (computed) 0x5175608a (in file)
+IEND, 0 bytes at 196, OK CRC 0xae426082
+This PNG has 4 chunks (0 IDAT), 200 bytes (0.195 KiB), encoding 3627 bytes (3.542 KiB) of image data (5.51%), 1 bad CRC
+```
+
+```
 $ analyzepng.exe --no-idat 2000px-Pacman.png
 File '2000px-Pacman.png'
 IHDR, 13 bytes at 16, 2000 x 2107, 8-bit RGBA
