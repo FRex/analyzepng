@@ -183,11 +183,19 @@ static int print_usage(const char * argv0, FILE * f)
 {
     argv0 = filepath_to_filename(argv0);
     fprintf(f, "%s - print information about chunks of given png files\n", argv0);
-    if(BLA_WMAIN_USING_WMAIN_BOOLEAN)
-        fprintf(f, "Windows build capable of colors and UTF-16 filenames\n");
+    fprintf(f, "https://github.com/FRex/analyzepng\n");
 
-    if(OPENBSD_PLEDGE_AND_UNVEIL_USED)
+#ifdef GIT_COMMIT_HASH
+    fprintf(f, "built from commit %s\n", GIT_COMMIT_HASH);
+#endif
+
+#if BLA_WMAIN_USING_WMAIN_BOOLEAN == 1
+        fprintf(f, "Windows build capable of colors and UTF-16 filenames\n");
+#endif
+
+#if OPENBSD_PLEDGE_AND_UNVEIL_USED == 1
         fprintf(f, "OpenBSD build using pledge(2) and unveil(2) for extra safety\n");
+#endif
 
     fprintf(f, "Usage: %s [--no-idat] file.png... # a single - means read from stdin\n", argv0);
     fprintf(f, "    --h OR --help #print this help to stdout\n");
