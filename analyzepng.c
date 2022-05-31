@@ -224,6 +224,10 @@ struct myruntime
     int sbitbytes;
     int verifycrc;
     unsigned crcvar;
+
+    /* prepend \n to the error message, set to 1 when in the middle of writing a
+       multi part message and some operation requires more reads that might fail */
+    int errorneedsnewline;
 };
 
 /* named myread to not conflict with POSIX function of same name */
@@ -254,7 +258,7 @@ static void skip_step_int(struct myruntime * runtime, int amount)
 
 static void error(struct myruntime * runtime, const char * errmsg)
 {
-    fprintf(stderr, "Error: %s\n", errmsg);
+    fprintf(stderr, "%sError: %s\n", runtime->errorneedsnewline ? "\n" : "", errmsg);
     longjmp(runtime->jumper, 1);
 }
 
@@ -828,6 +832,8 @@ static int parse_png_chunk(struct myruntime * runtime)
         usedbyextra = print_extra_info(runtime, len, buff + 4);
     }
 
+    runtime->errorneedsnewline = 1;
+
     if(runtime->verifycrc)
     {
         unsigned char buff[16 * 1024];
@@ -856,6 +862,7 @@ static int parse_png_chunk(struct myruntime * runtime)
     if(printchunk)
         printf("\n");
 
+    runtime->errorneedsnewline = 0;
     ++runtime->chunks;
     runtime->idatchunks += isidat;
     return 0 != strncmp(buff + 4, "IEND", 4);
