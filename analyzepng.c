@@ -262,6 +262,31 @@ static void error(struct myruntime * runtime, const char * errmsg)
     longjmp(runtime->jumper, 1);
 }
 
+static void error_if_filepos_eof(struct myruntime * runtime)
+{
+    char useless;
+
+    /* NOTE: we do all this here instead of using ftell since ftell cant
+       portably give file size that is 64 bit, nor can it tell us fseek
+       failed since it didnt - fseek past EOF is valid on some OSes */
+
+    /* seek one back */
+    if(fseek(runtime->f, -1, SEEK_CUR))
+        error(runtime, "failed to seek 1 byte back for filepos past EOF test");
+
+    /* and check if we can read here */
+    if(fread(&useless, 1, 1, runtime->f) == 1)
+        return; /* all okay */
+
+    if(feof(runtime->f))
+        error(runtime, "feof is true after failing to read 1 byte for filepos past EOF test");
+
+    if(ferror(runtime->f))
+        error(runtime, "ferror is true after failing to read 1 byte for filepos past EOF test");
+
+    error(runtime, "unkown reason for failing to read 1 byte for filepos past EOF test");
+}
+
 #define SKIP_THROWAWAY_BUFF_SIZE (32 * 1024 * 1024)
 static char skipThrowawayBuff[SKIP_THROWAWAY_BUFF_SIZE];
 
@@ -286,6 +311,10 @@ static void skip(struct myruntime * runtime, unsigned amount)
         return;
     }
 
+    if(amount == 0u)
+        return;
+
+    /* by now we know the amount is non zero */
     const int step = 1900000000;
     while(amount >= (unsigned)step)
     {
@@ -293,6 +322,7 @@ static void skip(struct myruntime * runtime, unsigned amount)
         amount -= step;
     }
     skip_step_int(runtime, (int)amount);
+    error_if_filepos_eof(runtime);
 }
 
 /* ensures b - does nothing if its true, prints Errr: errmsg and longjmps if its false */
