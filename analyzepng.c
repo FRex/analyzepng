@@ -80,7 +80,7 @@ static int samestring(const char * a, const char * b)
 
 static int isoption(const char * arg)
 {
-    return samestring(arg, "--no-idat") || samestring(arg, "--plte") || samestring(arg, "--color-plte") || samestring(arg, "--crc");
+    return samestring(arg, "--no-idat") || samestring(arg, "--plte") || samestring(arg, "--color-plte") || samestring(arg, "--crc") || samestring(arg, "--no-sort-plte");
 }
 
 #ifdef __OpenBSD__
@@ -202,6 +202,7 @@ static int print_usage(const char * argv0, FILE * f)
     fprintf(f, "    --no-idat #don't print IDAT chunk locations and sizes, can be anywhere\n");
     fprintf(f, "    --plte #print RGB values from the PLTE chunk\n");
     fprintf(f, "    --color-plte #print RGB values from the PLTE chunk using ANSI escape codes\n");
+    fprintf(f, "    --no-sort-plte #do not sort the PLTE chunk before printing\n");
     fprintf(f, "    --crc #verify CRC checksums of the chunks, slow for big files\n");
     fprintf(f, "    +set-bash-completion #print command to set bash completion\n");
     fprintf(f, "    +do-bash-completion #do completion based on args from bash\n");
@@ -223,6 +224,7 @@ struct myruntime
     int bitsperpixel;
     int sbitbytes;
     int verifycrc;
+    int skippalettesort;
     unsigned crcvar;
 
     /* prepend \n to the error message, set to 1 when in the middle of writing a
@@ -696,12 +698,17 @@ static unsigned print_extra_info(struct myruntime * runtime, unsigned len, const
         if(extra > 0)
             printf(" and %d extraneous byte%s", extra, (extra > 1) ? "s" : "");
 
-        printf(", sorted by brightness: ");
+        if(runtime->skippalettesort)
+            printf(", file order: ");
+        else
+            printf(", sorted by brightness: ");
+
         myread(runtime, palette, palettesize);
         if(runtime->verifycrc)
             runtime->crcvar = crcUpdate(runtime->crcvar, palette, palettesize);
 
-        qsort(palette, palettesize / 3, 3, compareRGB);
+        if(!runtime->skippalettesort)
+            qsort(palette, palettesize / 3, 3, compareRGB);
 
         for(i = 0; i < (int)palettesize; i += 3)
         {
@@ -1003,7 +1010,7 @@ static int setjmp_and_doit(struct myruntime * runtime)
     return 1;
 }
 
-static int parse_and_close_png_file(FILE * f, int skipidat, int showpalette, int showpalettecolors, int verifycrc)
+static int parse_and_close_png_file(FILE * f, int skipidat, int showpalette, int showpalettecolors, int verifycrc, int skippalettesort)
 {
     struct myruntime runtime;
     int ret;
@@ -1014,6 +1021,7 @@ static int parse_and_close_png_file(FILE * f, int skipidat, int showpalette, int
     runtime.showpalette = showpalette;
     runtime.showpalettecolors = showpalettecolors;
     runtime.verifycrc = verifycrc;
+    runtime.skippalettesort = skippalettesort;
     ret = setjmp_and_doit(&runtime);
 
     /* if it was stdin then don't close it */
@@ -1023,7 +1031,7 @@ static int parse_and_close_png_file(FILE * f, int skipidat, int showpalette, int
     return ret;
 }
 
-static int handle_file(const char * fname, int skipidat, int showpalette, int showpalettecolors, int verifycrc)
+static int handle_file(const char * fname, int skipidat, int showpalette, int showpalettecolors, int verifycrc, int skippalettesort)
 {
     FILE * f;
     if(samestring(fname, "-"))
@@ -1038,7 +1046,7 @@ static int handle_file(const char * fname, int skipidat, int showpalette, int sh
         else
             printf("File '%s'\n", fname);
 
-        return parse_and_close_png_file(f, skipidat, showpalette, showpalettecolors, verifycrc);
+        return parse_and_close_png_file(f, skipidat, showpalette, showpalettecolors, verifycrc, skippalettesort);
     }
 
     fprintf(stderr, "Error: fopen('%s') = NULL\n", fname);
@@ -1072,10 +1080,10 @@ static void fputs_with_escaped_slashes(const char * s, FILE * f)
     } /* while *s */
 }
 
-#define OPTION_STRINGS_COUNT 8
+#define OPTION_STRINGS_COUNT 9
 const char * const kAllOptionStrings[OPTION_STRINGS_COUNT] = {
     "--no-idat",
-    "--plte", "--color-plte",
+    "--plte", "--color-plte", "--no-sort-plte",
     "-h", "--help",
     "--crc",
     "+set-bash-completion", "+do-bash-completion",
@@ -1196,7 +1204,7 @@ static int enableConsoleColor(void)
 
 static int my_utf8_main(int argc, char ** argv)
 {
-    int i, anyerrs, skipidat, files, showpalette, showpalettecolors, verifycrc;
+    int i, anyerrs, skipidat, files, showpalette, showpalettecolors, verifycrc, skippalettesort;
 
     applyOpenBsdRestrictions(argc, argv);
     ensureNoWindowsLineConversions();
@@ -1215,6 +1223,7 @@ static int my_utf8_main(int argc, char ** argv)
     showpalette = count_exact_option_presence(argc, argv, "--plte");
     showpalettecolors = count_exact_option_presence(argc, argv, "--color-plte");
     verifycrc = count_exact_option_presence(argc, argv, "--crc");
+    skippalettesort = count_exact_option_presence(argc, argv, "--no-sort-plte");
     if((argc - skipidat) < 2)
         return print_usage(argv[0], stderr);
 
@@ -1233,7 +1242,7 @@ static int my_utf8_main(int argc, char ** argv)
             printf("\n");
 
         ++files;
-        anyerrs += handle_file(argv[i], !!skipidat, !!showpalette, !!showpalettecolors, !!verifycrc);
+        anyerrs += handle_file(argv[i], !!skipidat, !!showpalette, !!showpalettecolors, !!verifycrc, !!skippalettesort);
     } /* for */
 
     return !!anyerrs;

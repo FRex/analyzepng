@@ -42,6 +42,7 @@ Usage: analyzepng.exe [--no-idat] file.png... # a single - means read from stdin
     --no-idat #don't print IDAT chunk locations and sizes, can be anywhere
     --plte #print RGB values from the PLTE chunk
     --color-plte #print RGB values from the PLTE chunk using ANSI escape codes
+    --no-sort-plte #do not sort the PLTE chunk before printing
     --crc #verify CRC checksums of the chunks, slow for big files
     +set-bash-completion #print command to set bash completion
     +do-bash-completion #do completion based on args from bash
@@ -62,7 +63,8 @@ to avoid running into any `-O2` optimizer bug similar to this one that affected
 
 Option `--no-idat` skips printing `IDAT` chunks, which can be useful to not clutter
 the output if there are very many. Total `IDAT` count is still displayed at the end.
-Use `--plte` or `--color-plte` to print the palette from the `PLTE` chunk (if present).
+Use `--plte` and/or `--color-plte` to print the palette from the `PLTE` chunk (if present).
+To not sort the palette entries by brightness add `--no-sort-plte`.
 Option `--crc` calculates CRC of each chunk and compares it to CRC stored in the file.
 
 ```
