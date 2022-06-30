@@ -118,7 +118,11 @@ static void applyOpenBsdRestrictions(int argc, char ** argv)
 }
 #else
 #define OPENBSD_PLEDGE_AND_UNVEIL_USED 0
-static void applyOpenBsdRestrictions(int argc, char ** argv) {}
+static void applyOpenBsdRestrictions(int argc, char ** argv)
+{
+    (void)argc;
+    (void)argv;
+}
 #endif /* __OpenBSD__ */
 
 static void ensureNoWindowsLineConversions(void)
@@ -753,7 +757,7 @@ static unsigned print_extra_info(struct myruntime * runtime, unsigned len, const
     if(0 == strcmp(id, "sBIT"))
     {
         unsigned char buff[4]; /* up to 4 bytes sBIT is okay*/
-        int neededbytes, i;
+        unsigned neededbytes, i;
 
         neededbytes = runtime->sbitbytes;
         fputs(",", stdout);
@@ -886,9 +890,9 @@ static int parse_png_chunk(struct myruntime * runtime)
         myread(runtime, buff, 4);
         runtime->crcvar = crcFinish(runtime->crcvar);
         if(printchunk)
-            runtime->badcrc += printCrc(runtime->crcvar, big_u32(buff));
+            runtime->badcrc += printCrc(runtime->crcvar, big_u32((const char*)buff));
         else
-            runtime->badcrc += runtime->crcvar != big_u32(buff);
+            runtime->badcrc += runtime->crcvar != big_u32((const char*)buff);
     }
     else
     {
