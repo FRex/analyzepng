@@ -80,7 +80,7 @@ static int samestring(const char * a, const char * b)
 
 static int isoption(const char * arg)
 {
-    return samestring(arg, "--no-idat") || samestring(arg, "--plte") || samestring(arg, "--color-plte") || samestring(arg, "--crc") || samestring(arg, "--no-sort-plte");
+    return samestring(arg, "--no-idat") || samestring(arg, "--skip-idat") || samestring(arg, "--plte") || samestring(arg, "--color-plte") || samestring(arg, "--crc") || samestring(arg, "--no-sort-plte");
 }
 
 #ifdef __OpenBSD__
@@ -201,9 +201,10 @@ static int print_usage(const char * argv0, FILE * f)
         fprintf(f, "OpenBSD build using pledge(2) and unveil(2) for extra safety\n");
 #endif
 
-    fprintf(f, "Usage: %s [--no-idat] file.png... # a single - means read from stdin\n", argv0);
+    fprintf(f, "Usage: %s [opts]... file.png... # a single - means read from stdin\n", argv0);
     fprintf(f, "    --h OR --help #print this help to stdout\n");
     fprintf(f, "    --no-idat #don't print IDAT chunk locations and sizes, can be anywhere\n");
+    fprintf(f, "    --skip-idat #alias for --no-idat\n");
     fprintf(f, "    --plte #print RGB values from the PLTE chunk\n");
     fprintf(f, "    --color-plte #print RGB values from the PLTE chunk using ANSI escape codes\n");
     fprintf(f, "    --no-sort-plte #do not sort the PLTE chunk before printing\n");
@@ -1084,9 +1085,10 @@ static void fputs_with_escaped_slashes(const char * s, FILE * f)
     } /* while *s */
 }
 
-#define OPTION_STRINGS_COUNT 9
+#define OPTION_STRINGS_COUNT 10
 const char * const kAllOptionStrings[OPTION_STRINGS_COUNT] = {
     "--no-idat",
+    "--skip-idat",
     "--plte", "--color-plte", "--no-sort-plte",
     "-h", "--help",
     "--crc",
@@ -1223,7 +1225,7 @@ static int my_utf8_main(int argc, char ** argv)
     if(handle_completion(argc, argv))
         return 0;
 
-    skipidat = count_exact_option_presence(argc, argv, "--no-idat");
+    skipidat = count_exact_option_presence(argc, argv, "--no-idat") + count_exact_option_presence(argc, argv, "--skip-idat");
     showpalette = count_exact_option_presence(argc, argv, "--plte");
     showpalettecolors = count_exact_option_presence(argc, argv, "--color-plte");
     verifycrc = count_exact_option_presence(argc, argv, "--crc");
