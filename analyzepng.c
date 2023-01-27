@@ -382,6 +382,8 @@ const unsigned char kJngHeaderUnix2DosBad[10] = {0x8B, 'J', 'N', 'G', '\r', '\r'
 
 const unsigned char kJpegTriByteStart[3] = {0xff, 0xd8, 0xff};
 
+const unsigned char kGimpXcfByteStart[8] = {'g', 'i', 'm', 'p', ' ', 'x', 'c', 'f'};
+
 /* buff must be at least 10 bytes (its 8 + 8 + 13 now) since some bad headers are 9 or 10 bytes */
 static void check_png_header(struct myruntime * runtime, const char * buff)
 {
@@ -424,6 +426,8 @@ static void check_png_header(struct myruntime * runtime, const char * buff)
 
     /* bmp files starts with BM + length, etc. not BMP! */
     ensure(runtime, 0 != memcmp(buff, "BM", 2), "starts with 'BM', like a BMP file");
+
+    ensure(runtime, 0 != memcmp(buff, kGimpXcfByteStart, 8), "starts with 'gimp xcf' like an xcf file (native GIMP file format)");
 
     /* catches all other unknown errors so keep last */
     if(0 != memcmp(buff, kPngHeaderGood, 8))
