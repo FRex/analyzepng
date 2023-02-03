@@ -597,9 +597,6 @@ static void print_4cc_no_newline(const char * id)
 
 static void print_4cc_extra_info(const char * id)
 {
-    if(0 == strcmp(id, "acTL"))
-        printf(", APNG animation control");
-
     if(0 == strcmp(id, "fcTL"))
         printf(", APNG frame control");
 
@@ -850,8 +847,31 @@ static unsigned print_extra_info(struct myruntime * runtime, unsigned len, const
         return 1u;
     } /* sRGB */
 
+    if(0 == strcmp(id, "acTL"))
+    {
+        char buff[8];
+        unsigned frames = 0u, reps = 0u;
+
+        printf(", APNG animation control");
+        if(len != 8)
+        {
+            printf(", %u bytes instead of expected 8", len);
+            return 0u;
+        }
+
+        myread(runtime, buff, 8u);
+        frames = big_u32(buff + 0);
+        reps = big_u32(buff + 4);
+
+        printf(", %u frames, %u repetitions", frames, reps);
+        if(reps == 0u)
+            printf(" (loops forever)");
+
+        return 8u;
+    }
+
     return 0u; /* nothing special and no extra in chunk data read */
-}
+} /* print_extra_info */
 
 static int parse_png_chunk(struct myruntime * runtime)
 {
