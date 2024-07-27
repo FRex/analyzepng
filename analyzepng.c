@@ -80,7 +80,7 @@ static int samestring(const char * a, const char * b)
 
 static int isoption(const char * arg)
 {
-    return samestring(arg, "--no-idat") || samestring(arg, "--skip-idat") || samestring(arg, "--plte") || samestring(arg, "--color-plte") || samestring(arg, "--crc") || samestring(arg, "--no-sort-plte");
+    return samestring(arg, "--no-idat") || samestring(arg, "--skip-idat") || samestring(arg, "--plte") || samestring(arg, "--color-plte") || samestring(arg, "--crc") || samestring(arg, "--dont-sort-plte");
 }
 
 #ifdef __OpenBSD__
@@ -207,7 +207,7 @@ static int print_usage(const char * argv0, FILE * f)
     fprintf(f, "    --skip-idat #alias for --no-idat\n");
     fprintf(f, "    --plte #print RGB values from the PLTE chunk\n");
     fprintf(f, "    --color-plte #print RGB values from the PLTE chunk using ANSI escape codes\n");
-    fprintf(f, "    --no-sort-plte #do not sort the PLTE chunk before printing\n");
+    fprintf(f, "    --dont-sort-plte #do not sort the PLTE chunk before printing\n");
     fprintf(f, "    --crc #verify CRC checksums of the chunks, slow for big files\n");
     fprintf(f, "    +set-bash-completion #print command to set bash completion\n");
     fprintf(f, "    +do-bash-completion #do completion based on args from bash\n");
@@ -1113,7 +1113,7 @@ static void fputs_with_escaped_slashes(const char * s, FILE * f)
 const char * const kAllOptionStrings[OPTION_STRINGS_COUNT] = {
     "--no-idat",
     "--skip-idat",
-    "--plte", "--color-plte", "--no-sort-plte",
+    "--plte", "--color-plte", "--dont-sort-plte",
     "-h", "--help",
     "--crc",
     "+set-bash-completion", "+do-bash-completion",
@@ -1253,7 +1253,7 @@ static int my_utf8_main(int argc, char ** argv)
     showpalette = count_exact_option_presence(argc, argv, "--plte");
     showpalettecolors = count_exact_option_presence(argc, argv, "--color-plte");
     verifycrc = count_exact_option_presence(argc, argv, "--crc");
-    skippalettesort = count_exact_option_presence(argc, argv, "--no-sort-plte");
+    skippalettesort = count_exact_option_presence(argc, argv, "--dont-sort-plte");
     if((argc - skipidat) < 2)
         return print_usage(argv[0], stderr);
 
