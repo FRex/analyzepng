@@ -57,9 +57,8 @@ IEND, 0 bytes at 31867
 This PNG has 3 chunks (1 IDAT), 31871 bytes (31.124 KiB), encoding 107944 bytes (105.414 KiB) of image data (29.53%)
 ```
 
-Go to releases to download a Windows exe compiled with Pelles C with no `-O2`
-to avoid running into any `-O2` optimizer bug similar to this one that affected
-`stb_image`: [Pelles C forum bug report](https://forum.pellesc.de/index.php?topic=7837.0)
+Go to releases to download statically compliled Windows and Linux binaries
+compiled with `zig cc` targets`native-windows-msvc` and `x86-linux-musl`.
 
 Option `--no-idat` skips printing `IDAT` chunks, which can be useful to not clutter
 the output if there are very many. Total `IDAT` count is still displayed at the end.
