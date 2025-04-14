@@ -189,6 +189,10 @@ static int print_usage(const char * argv0, FILE * f)
     fprintf(f, "%s - print information about chunks of given png files\n", argv0);
     fprintf(f, "https://github.com/FRex/analyzepng\n");
 
+#ifdef PROG_VERSION
+    fprintf(f, "version %s\n", PROG_VERSION);
+#endif
+
 #ifdef GIT_COMMIT_HASH
     fprintf(f, "built from commit %s\n", GIT_COMMIT_HASH);
 #endif
