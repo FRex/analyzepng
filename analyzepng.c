@@ -874,6 +874,27 @@ static unsigned print_extra_info(struct myruntime * runtime, unsigned len, const
         return 8u;
     }
 
+    if(0 == strcmp(id, "eXIf"))
+    {
+        #define MAX_EXIF_BUFFER_TO_PRINT 128
+        unsigned char buff[MAX_EXIF_BUFFER_TO_PRINT];
+        int i;
+
+        if(len > MAX_EXIF_BUFFER_TO_PRINT) len = MAX_EXIF_BUFFER_TO_PRINT;
+        myread(runtime, buff, len);
+
+        /* TODO: use an output buffer to not fputs/fputc/printf so many times */
+        fputs(" - ", stdout);
+        for(i = 0; i < (int)len; ++i)
+        {
+            if(i) fputc(' ', stdout);
+            if(i && (i % 4) == 0) fputc(' ', stdout);
+            printf("%X%X", buff[i] >> 4, buff[i] & 0xf);
+        }
+
+        return len;
+    }
+
     return 0u; /* nothing special and no extra in chunk data read */
 } /* print_extra_info */
 
