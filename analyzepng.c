@@ -874,7 +874,7 @@ static unsigned print_extra_info(struct myruntime * runtime, unsigned len, const
         return 8u;
     }
 
-    if(0 == strcmp(id, "eXIf"))
+    if(0 == strcmp(id, "eXIf") || 0 == strcmp(id, "tRNS"))
     {
         #define MAX_EXIF_BUFFER_TO_PRINT 128
         unsigned char buff[MAX_EXIF_BUFFER_TO_PRINT];
