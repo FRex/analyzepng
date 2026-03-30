@@ -57,6 +57,8 @@ IEND, 0 bytes at 31867
 This PNG has 3 chunks (1 IDAT), 31871 bytes (31.124 KiB), encoding 107944 bytes (105.414 KiB) of image data (29.53%)
 ```
 
+![plte-example.png](plte-example.png)
+
 Go to releases to download statically compliled Windows and Linux binaries
 compiled with `zig cc` targets`native-windows-msvc` and `x86-linux-musl`.
 
