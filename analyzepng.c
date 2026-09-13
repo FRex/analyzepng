@@ -1023,14 +1023,14 @@ static void doit(struct myruntime * runtime)
     check_for_trailing_data(runtime);
 }
 
-#ifdef _MSC_VER
+#ifdef ANALYZEPNG_ON_WINDOWS
 /*for MultiByteToWideChar */
 #include <Windows.h>
 #endif
 
 static FILE * my_utf8_fopen_rb(const char * fname)
 {
-#ifndef _MSC_VER
+#ifndef ANALYZEPNG_ON_WINDOWS
     return fopen(fname, "rb");
 #else
     FILE * ret;
